@@ -137,6 +137,7 @@ func NewApp(uiFileName string, store ItemStore, defaultWidth, defaultHeight int)
 		store:          store,
 	}
 
+	entry.Connect("activate", a.AddItem)
 	btn.Connect("clicked", a.AddItem)
 
 	return a, nil
