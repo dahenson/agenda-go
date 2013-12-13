@@ -92,11 +92,13 @@ func (a *App) AddItem() {
 	item := NewItem(text)
 	if err := a.store.AddItem(item); err != nil {
 		log.Println("ItemStore failed to add item:", item)
+		return
 		// TODO: Notify user if ItemStore fails to add item
 	}
 	var iter gtk.TreeIter
 	a.itemsListStore.Append(&iter)
 	a.itemsListStore.Set(&iter, []int{0}, []interface{}{text})
+	a.itemTextEntry.SetText("")
 	// TODO make a TreeViewItem or whatever they're called and add it to the treeview
 }
 
