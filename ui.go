@@ -41,18 +41,6 @@ func itemTextEntry(builder *gtk.Builder, objName string) (*gtk.Entry, error) {
 	return entry, nil
 }
 
-func addItemButton(builder *gtk.Builder, addItemButtonName string) (*gtk.Button, error) {
-	obj, err := builder.GetObject(addItemButtonName)
-	if err != nil {
-		return nil, err
-	}
-	btn, ok := (obj).(*gtk.Button)
-	if err := checkTypeAssertion(addItemButtonName, ok); err != nil {
-		return nil, err
-	}
-	return btn, nil
-}
-
 func itemsListStore(builder *gtk.Builder, itemsTreeViewName string) (*gtk.ListStore, error) {
 	obj, err := builder.GetObject(itemsTreeViewName)
 	if err != nil {
@@ -75,7 +63,6 @@ func itemsListStore(builder *gtk.Builder, itemsTreeViewName string) (*gtk.ListSt
 type App struct {
 	mainWindow     *gtk.Window
 	itemTextEntry  *gtk.Entry
-	addItemButton  *gtk.Button
 	itemsListStore *gtk.ListStore
 	store          ItemStore
 }
@@ -119,11 +106,6 @@ func NewApp(uiFileName string, store ItemStore, defaultWidth, defaultHeight int)
 		return nil, err
 	}
 
-	btn, err := addItemButton(builder, "addItemButton")
-	if err != nil {
-		return nil, err
-	}
-
 	ls, err := itemsListStore(builder, "itemsTreeView")
 	if err != nil {
 		return nil, err
@@ -132,13 +114,12 @@ func NewApp(uiFileName string, store ItemStore, defaultWidth, defaultHeight int)
 	a := &App{
 		mainWindow:     win,
 		itemTextEntry:  entry,
-		addItemButton:  btn,
 		itemsListStore: ls,
 		store:          store,
 	}
 
 	entry.Connect("activate", a.AddItem)
-	btn.Connect("clicked", a.AddItem)
+	entry.Connect("icon-release", a.AddItem)
 
 	return a, nil
 }
