@@ -29,6 +29,9 @@ func (is *FSItemStore) AddItem(item Item) error {
 
 func (is *FSItemStore) Items() ([]Item, error) {
 	data, err := is.fs.ReadFile(is.filename)
+	if is.fs.IsNotExist(err) {
+		return []Item{}, nil
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -71,3 +71,10 @@ func TestAddItem_WhenTwoItemsAdded_ExpectBothItemsInItems(t *testing.T) {
 		}
 	}
 }
+
+func TestItems_WhenNoItemsFileInFileSystem_ExpectNoErr(t *testing.T) {
+	is := initTestItemStore()
+	if _, err := is.Items(); err != nil {
+		t.Errorf("Expected no error, but got: %v", err)
+	}
+}
