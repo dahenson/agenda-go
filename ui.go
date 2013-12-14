@@ -78,15 +78,31 @@ func (a *App) AddItem() {
 	text, _ := a.itemTextEntry.GetText()
 	item := NewItem(text)
 	if err := a.store.AddItem(item); err != nil {
-		log.Println("ItemStore failed to add item:", item)
+		log.Println("ItemStore failed to add item:", item, "err:", err)
 		return
 		// TODO: Notify user if ItemStore fails to add item
 	}
-	var iter gtk.TreeIter
-	a.itemsListStore.Append(&iter)
-	a.itemsListStore.Set(&iter, []int{0}, []interface{}{text})
+	a.AddToTreeView(item)
 	a.itemTextEntry.SetText("")
 	// TODO make a TreeViewItem or whatever they're called and add it to the treeview
+}
+
+func (a *App) AddToTreeView(item Item) {
+	var iter gtk.TreeIter
+	a.itemsListStore.Append(&iter)
+	a.itemsListStore.Set(&iter, []int{0}, []interface{}{item.Text()})
+}
+
+func (a *App) LoadItems() error {
+	items, err := a.store.Items()
+	if err != nil {
+		return err
+	}
+
+	for _, item := range items {
+		a.AddToTreeView(item)
+	}
+	return nil
 }
 
 func NewApp(uiFileName string, store ItemStore, defaultWidth, defaultHeight int) (*App, error) {
@@ -120,6 +136,10 @@ func NewApp(uiFileName string, store ItemStore, defaultWidth, defaultHeight int)
 
 	entry.Connect("activate", a.AddItem)
 	entry.Connect("icon-release", a.AddItem)
+
+	if err := a.LoadItems(); err != nil {
+		return nil, err
+	}
 
 	return a, nil
 }

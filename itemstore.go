@@ -1,10 +1,45 @@
 package main
 
-import ()
+import (
+	"strings"
+)
 
 type ItemStore interface {
 	AddItem(item Item) error
-	RemoveItem(item Item) error
+	Items() ([]Item, error)
+	//	RemoveItem(item Item) error
+}
+
+type FSItemStore struct {
+	filename string
+	items    []Item
+	fs       fileSystem
+}
+
+func NewFSItemStore(filename string) *FSItemStore {
+	return &FSItemStore{filename: filename, items: make([]Item, 0), fs: fs}
+}
+
+func (is *FSItemStore) AddItem(item Item) error {
+	if _, err := is.fs.Append(is.filename, item.Text()+"\n"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (is *FSItemStore) Items() ([]Item, error) {
+	data, err := is.fs.ReadFile(is.filename)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(data), "\n")
+	items := []Item{}
+	for _, line := range lines {
+		if len(line) > 0 {
+			items = append(items, NewItem(line))
+		}
+	}
+	return items, nil
 }
 
 type InMemoryItemStore struct {
@@ -23,6 +58,10 @@ func (is *InMemoryItemStore) RemoveItem(item Item) error {
 		}
 	}
 	return nil
+}
+
+func (is *InMemoryItemStore) Items() ([]Item, error) {
+	return is.items, nil
 }
 
 func NewInMemoryItemStore() *InMemoryItemStore {

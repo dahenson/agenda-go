@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	app, err := NewApp("ui.glade", NewInMemoryItemStore(), 300, 400)
+	app, err := NewApp("ui.glade", NewFSItemStore("default.txt"), 300, 400)
 	if err != nil {
 		log.Fatal(err)
 	}
