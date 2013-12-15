@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/conformal/gotk3/glib"
 	"github.com/conformal/gotk3/gtk"
 	"log"
 )
@@ -41,22 +40,15 @@ func itemTextEntry(builder *gtk.Builder, objName string) (*gtk.Entry, error) {
 	return entry, nil
 }
 
-func itemsListStore(builder *gtk.Builder, itemsTreeViewName string) (*gtk.ListStore, error) {
-	obj, err := builder.GetObject(itemsTreeViewName)
+func itemsListStore(builder *gtk.Builder, itemsListStoreName string) (*gtk.ListStore, error) {
+	obj, err := builder.GetObject(itemsListStoreName)
 	if err != nil {
 		return nil, err
 	}
-	tv, ok := (obj).(*gtk.TreeView)
-	if err := checkTypeAssertion(itemsTreeViewName, ok); err != nil {
+	ls, ok := (obj).(*gtk.ListStore)
+	if err := checkTypeAssertion(itemsListStoreName, ok); err != nil {
 		return nil, err
 	}
-
-	renderer, _ := gtk.CellRendererTextNew()
-	col, _ := gtk.TreeViewColumnNewWithAttribute("Item", renderer, "text", 0)
-	tv.AppendColumn(col)
-
-	ls, _ := gtk.ListStoreNew(glib.TYPE_STRING)
-	tv.SetModel(ls)
 	return ls, nil
 }
 
@@ -122,7 +114,7 @@ func NewApp(uiFileName string, store ItemStore, defaultWidth, defaultHeight int)
 		return nil, err
 	}
 
-	ls, err := itemsListStore(builder, "itemsTreeView")
+	ls, err := itemsListStore(builder, "itemsListStore")
 	if err != nil {
 		return nil, err
 	}
