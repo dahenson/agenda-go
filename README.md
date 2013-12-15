@@ -11,5 +11,5 @@ agenda depends on GTK+3.6.8 or greater.
 3. Install it
   1. If you have GTK >= 3.10 installed: `$ go install github.com/dahenson/agenda`
   2. If you have GTK >= 3.8 < 3.10 installed: `$ go install -tags=gtk_3_8 github.com/dahenson/agenda`
-  3. If you have GTK >= 3.6.8 < 3.8 installed: `$ go install -tags=gtk_3_8_6 github.com/dahenson/agenda`
+  3. If you have GTK >= 3.6.8 < 3.8 installed: `$ go install -tags=gtk_3_6 github.com/dahenson/agenda`
 4. Run it: `$ agenda`
