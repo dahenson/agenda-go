@@ -5,21 +5,21 @@ import (
 )
 
 type ItemStore interface {
-	AddItem(item Item) error
-	Items() ([]Item, error)
+	AddItem(item *Item) error
+	Items() ([]*Item, error)
 }
 
 type itemStore struct {
 	filename string
 	fs fileSystem
-	items []Item
+	items []*Item
 }
 
 func NewItemStore(filename string) ItemStore {
-	return &itemStore{filename: filename, fs: fs, items: []Item{}}
+	return &itemStore{filename: filename, fs: fs, items: []*Item{}}
 }
 
-func (is *itemStore) Flush(items []Item) error {
+func (is *itemStore) Flush(items []*Item) error {
 	data, err := json.Marshal(items)
 	if err != nil {
 		return err
@@ -31,7 +31,7 @@ func (is *itemStore) Flush(items []Item) error {
 	return nil
 }
 
-func (is *itemStore) AddItem(item Item) error {
+func (is *itemStore) AddItem(item *Item) error {
 	// in case writing to the file fails, we don't want to update our in-memory model
 	// thus getting out of sync with the file's state, so we handle any filesystem errors
 	// before updating our internal model
@@ -55,7 +55,7 @@ func (is *itemStore) Load() error {
 }
 
 // returns the contents of the itemStore's file or an error if there are filesystem problems
-func (is *itemStore) Items() ([]Item, error) {
+func (is *itemStore) Items() ([]*Item, error) {
 	if err := is.Load(); err != nil {
 		return nil, err
 	}
