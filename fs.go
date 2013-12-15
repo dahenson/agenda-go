@@ -11,29 +11,28 @@ var fs fileSystem = osFS{}
 
 type fileSystem interface {
 	ReadFile(name string) ([]byte, error)
-	Append(name, text string) (int, error)
+	Write(name string, data []byte) (int, error)
 	IsNotExist(err error) bool
 }
 
-
 type osFS struct {}
 func (osFS) ReadFile(name string) ([]byte, error) {
-	data, err := ioutil.ReadFile(name)
-	return data, err
+	return ioutil.ReadFile(name)
 }
-func (osFS) Append(name, text string) (int, error) {
-	file, err := os.OpenFile(name, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0660)
+func (osFS) IsNotExist(err error) bool {
+	if err == nil {
+		return false
+	}
+	return os.IsNotExist(err)
+}
+func (osFS) Write(name string, data []byte) (int, error) {
+	file, err := os.Create(name)
 	if err != nil {
 		return 0, err
 	}
 	defer file.Close()
-
-	return file.WriteString(text)
+	return file.Write(data)
 }
-func (osFS) IsNotExist(err error) bool {
-	return os.IsNotExist(err)
-}
-
 
 const (
 	NOT_EXIST_PREFIX = "open "
@@ -55,14 +54,12 @@ func (fs *fakeFS) ReadFile(name string) ([]byte, error) {
 	}
 	return data, nil
 }
-func (fs *fakeFS) Append(name, text string) (int, error) {
-	if _, found := fs.files[name]; found {
-		fs.files[name] = append(fs.files[name], []byte(text)...)
-	} else {
-		fs.files[name] = []byte(text)
-	}
-	return len(text), nil
+
+func (fs *fakeFS) Write(name string, data []byte) (int, error) {
+	fs.files[name] = data
+	return len(data), nil
 }
+
 func (fs *fakeFS) IsNotExist(err error) bool {
 	if err == nil {
 		return false

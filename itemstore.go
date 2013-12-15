@@ -1,72 +1,63 @@
 package main
 
 import (
-	"strings"
+	"encoding/json"
 )
 
 type ItemStore interface {
 	AddItem(item Item) error
 	Items() ([]Item, error)
-	//	RemoveItem(item Item) error
 }
 
-type FSItemStore struct {
+type itemStore struct {
 	filename string
-	items    []Item
-	fs       fileSystem
+	fs fileSystem
+	items []Item
 }
 
-func NewFSItemStore(filename string) *FSItemStore {
-	return &FSItemStore{filename: filename, items: make([]Item, 0), fs: fs}
+func NewItemStore(filename string) ItemStore {
+	return &itemStore{filename: filename, fs: fs, items: []Item{}}
 }
 
-func (is *FSItemStore) AddItem(item Item) error {
-	if _, err := is.fs.Append(is.filename, item.Text()+"\n"); err != nil {
+func (is *itemStore) Flush(items []Item) error {
+	data, err := json.Marshal(items)
+	if err != nil {
+		return err
+	}
+
+	if _, err := is.fs.Write(is.filename, data); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (is *FSItemStore) Items() ([]Item, error) {
+func (is *itemStore) AddItem(item Item) error {
+	// in case writing to the file fails, we don't want to update our in-memory model
+	// thus getting out of sync with the file's state, so we handle any filesystem errors
+	// before updating our internal model
+	temp := append(is.items, item)
+	if err := is.Flush(temp); err != nil {
+		return err
+	}
+	is.items = temp
+	return nil
+}
+
+func (is *itemStore) Load() error {
 	data, err := is.fs.ReadFile(is.filename)
 	if is.fs.IsNotExist(err) {
-		return []Item{}, nil
+		return nil
 	}
 	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, &is.items)
+}
+
+// returns the contents of the itemStore's file or an error if there are filesystem problems
+func (is *itemStore) Items() ([]Item, error) {
+	if err := is.Load(); err != nil {
 		return nil, err
 	}
-	lines := strings.Split(string(data), "\n")
-	items := []Item{}
-	for _, line := range lines {
-		if len(line) > 0 {
-			items = append(items, NewItem(line))
-		}
-	}
-	return items, nil
-}
-
-type InMemoryItemStore struct {
-	items []Item
-}
-
-func (is *InMemoryItemStore) AddItem(item Item) error {
-	is.items = append(is.items, item)
-	return nil
-}
-
-func (is *InMemoryItemStore) RemoveItem(item Item) error {
-	for i := 0; i < len(is.items); i++ {
-		if is.items[i].Text() == item.Text() {
-			is.items = append(is.items[:i-1], is.items[i+1:]...)
-		}
-	}
-	return nil
-}
-
-func (is *InMemoryItemStore) Items() ([]Item, error) {
 	return is.items, nil
-}
-
-func NewInMemoryItemStore() *InMemoryItemStore {
-	return new(InMemoryItemStore)
 }

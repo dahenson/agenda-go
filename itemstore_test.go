@@ -2,10 +2,14 @@ package main
 
 import (
 	"testing"
+	"log"
 )
 
-func initTestItemStore() *FSItemStore {
-	is := NewFSItemStore("default.txt")
+func initTestItemStore() ItemStore {
+	is, ok := (NewItemStore("default.txt")).(*itemStore)
+	if !ok {
+		log.Fatal("Expected `is` to be an *itemStore")
+	}
 	is.fs = newFakeFS()
 	return is
 }

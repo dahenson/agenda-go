@@ -79,10 +79,15 @@ func (a *App) AddItem() {
 	// TODO make a TreeViewItem or whatever they're called and add it to the treeview
 }
 
+const (
+	ITEMS_COLUMN = 0
+	COMPLETE_COLUMN = 1
+)
+
 func (a *App) AddToTreeView(item Item) {
 	var iter gtk.TreeIter
 	a.itemsListStore.Append(&iter)
-	a.itemsListStore.Set(&iter, []int{0}, []interface{}{item.Text()})
+	a.itemsListStore.Set(&iter, []int{ITEMS_COLUMN}, []interface{}{item.Text()})
 }
 
 func (a *App) LoadItems() error {
