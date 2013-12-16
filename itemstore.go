@@ -56,7 +56,7 @@ func (is *InMemoryItemStore) AddItem(item Item) error {
 
 func (is *InMemoryItemStore) RemoveItem(item Item) error {
 	for i := 0; i < len(is.items); i++ {
-		if is.items[i].Text() == item.Text() {
+		if is.items[i].Id() == item.Id() {
 			is.items = append(is.items[:i-1], is.items[i+1:]...)
 		}
 	}
