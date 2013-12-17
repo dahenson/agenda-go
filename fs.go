@@ -7,7 +7,10 @@ import (
 	"strings"
 )
 
-var fs fileSystem = osFS{}
+var (
+	fs fileSystem = osFS{}
+	filename = "default.json"
+)
 
 type fileSystem interface {
 	ReadFile(name string) ([]byte, error)
@@ -17,11 +20,28 @@ type fileSystem interface {
 
 type osFS struct{}
 
+// getPath() uses the XDG_DATA_HOME environmental variable to create agenda's
+// working directory. If the variable is not set, it uses the default of
+// "$HOME/.local/share", and creates the directory if it does not exist.
+func getPath() (string, error) {
+	xdg := os.Getenv("XDG_DATA_HOME")
+	if xdg == "" {
+		xdg = "$HOME/.local/share"
+	}
+	xdg = os.ExpandEnv(xdg) + "/agenda/"
+	if err := os.MkdirAll(xdg, 0744); err != nil { // Create directory
+		return "", err
+	}
+	return xdg, nil
+}
+
+// ReadFile() reads from the file identified by name
 func (osFS) ReadFile(name string) ([]byte, error) {
 	data, err := ioutil.ReadFile(name)
 	return data, err
 }
 
+// Append() appends an item to the file
 func (osFS) Append(name, text string) (int, error) {
 	file, err := os.OpenFile(name, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0660)
 	if err != nil {

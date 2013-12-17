@@ -16,8 +16,12 @@ type FSItemStore struct {
 	fs       fileSystem
 }
 
-func NewFSItemStore(filename string) *FSItemStore {
-	return &FSItemStore{filename: filename, items: make([]Item, 0), fs: fs}
+func NewFSItemStore(filename string) (*FSItemStore, error) {
+	path, err := getPath()
+	if err != nil {
+		return nil, err
+	}
+	return &FSItemStore{filename: path + filename, items: make([]Item, 0), fs: fs}, nil
 }
 
 func (is *FSItemStore) AddItem(item Item) error {
