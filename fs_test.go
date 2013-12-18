@@ -26,10 +26,7 @@ func TestGetDir_WhenEnvNotSet_ExpectDefault(t *testing.T) {
 		t.Fatalf("Could not initialize test: ", err)
 	}
 	expected := home + "/.local/share/agenda/"
-	path, err := getPath()
-	if err != nil {
-		t.Fatalf("Unexpected error: ", err)
-	}
+	path := getPath()
 	if path != expected {
 		t.Fatalf("Expected '%s', got '%s'", expected, path)
 	}
@@ -43,10 +40,7 @@ func TestGetDir_WhenEnvSet_ExpectEnv(t *testing.T) {
 		t.Fatalf("Could not initialize test: ", err)
 	}
 	expected := home + "/.local/share/test/agenda/"
-	path, err := getPath()
-	if err != nil {
-		t.Fatalf("Unexpected error: ", err)
-	}
+	path := getPath()
 	if path != expected {
 		t.Fatalf("Expected '%s', got '%s'", expected, path)
 	}

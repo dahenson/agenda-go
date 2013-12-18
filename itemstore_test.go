@@ -4,13 +4,10 @@ import (
 	"testing"
 )
 
-func initTestItemStore() (*FSItemStore, error) {
-	is, err := NewFSItemStore("default.txt")
-	if err != nil {
-		return nil, err
-	}
+func initTestItemStore() *FSItemStore {
+	is := NewFSItemStore("default.txt")
 	is.fs = newFakeFS()
-	return is, nil
+	return is
 }
 
 func eq(i1, i2 Item) bool {
@@ -18,10 +15,7 @@ func eq(i1, i2 Item) bool {
 }
 
 func TestAddItem_WhenEmpty_ExpectItemInItems(t *testing.T) {
-	is, err := initTestItemStore()
-	if err != nil {
-		t.Fatal("Unexpected error:", err)
-	}
+	is := initTestItemStore()
 	newItem := NewItem("An item")
 	if err := is.AddItem(newItem); err != nil {
 		t.Fatal("Unexpected err:", err)
@@ -45,10 +39,7 @@ func TestAddItem_WhenEmpty_ExpectItemInItems(t *testing.T) {
 
 func TestAddItem_WhenTwoItemsAdded_ExpectBothItemsInItems(t *testing.T) {
 	addedItems := []Item{NewItem("First item"), NewItem("Second item")}
-	is, err := initTestItemStore()
-	if err != nil {
-		t.Fatal("Unexpected error:", err)
-	}
+	is := initTestItemStore()
 	for _, item := range addedItems {
 		if err := is.AddItem(item); err != nil {
 			t.Fatal("Unexpected err:", err)
@@ -81,10 +72,7 @@ func TestAddItem_WhenTwoItemsAdded_ExpectBothItemsInItems(t *testing.T) {
 }
 
 func TestItems_WhenNoItemsFileInFileSystem_ExpectNoErr(t *testing.T) {
-	is, err := initTestItemStore()
-	if err != nil {
-		t.Fatal("Unexpected error:", err)
-	}
+	is := initTestItemStore()
 	if _, err := is.Items(); err != nil {
 		t.Errorf("Expected no error, but got: %v", err)
 	}

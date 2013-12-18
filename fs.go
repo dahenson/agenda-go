@@ -22,17 +22,14 @@ type osFS struct{}
 
 // getPath() uses the XDG_DATA_HOME environmental variable to create agenda's
 // working directory. If the variable is not set, it uses the default of
-// "$HOME/.local/share", and creates the directory if it does not exist.
-func getPath() (string, error) {
+// "$HOME/.local/share".
+func getPath() string {
 	xdg := os.Getenv("XDG_DATA_HOME")
 	if xdg == "" {
 		xdg = "$HOME/.local/share"
 	}
 	xdg = os.ExpandEnv(xdg) + "/agenda/"
-	if err := os.MkdirAll(xdg, 0744); err != nil { // Create directory
-		return "", err
-	}
-	return xdg, nil
+	return xdg
 }
 
 // ReadFile() reads from the file identified by name
