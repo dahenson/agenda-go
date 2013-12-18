@@ -17,8 +17,7 @@ type FSItemStore struct {
 }
 
 func NewFSItemStore(filename string) *FSItemStore {
-	path := getPath()
-	return &FSItemStore{filename: path + filename, items: make([]Item, 0), fs: fs}
+	return &FSItemStore{filename: filename, items: make([]Item, 0), fs: fs}
 }
 
 func (is *FSItemStore) AddItem(item Item) error {
