@@ -23,25 +23,25 @@ func testInit() error {
 
 func TestGetDir_WhenEnvNotSet_ExpectDefault(t *testing.T) {
 	if err := testInit(); err != nil {
-		t.Fatalf("Could not initialize test: ", err)
+		t.Fatal("Could not initialize test:", err)
 	}
 	expected := home + "/.local/share/agenda/"
 	path := getPath()
 	if path != expected {
-		t.Fatalf("Expected '%s', got '%s'", expected, path)
+		t.Fatal("Expected '%s', got '%s'", expected, path)
 	}
 }
 
 func TestGetDir_WhenEnvSet_ExpectEnv(t *testing.T) {
 	if err := testInit(); err != nil {
-		t.Fatalf("Could not initialize test: ", err)
+		t.Fatal("Could not initialize test:", err)
 	}
 	if err := os.Setenv("XDG_DATA_HOME", home + "/.local/share/test"); err != nil {
-		t.Fatalf("Could not initialize test: ", err)
+		t.Fatal("Could not initialize test:", err)
 	}
 	expected := home + "/.local/share/test/agenda/"
 	path := getPath()
 	if path != expected {
-		t.Fatalf("Expected '%s', got '%s'", expected, path)
+		t.Fatal("Expected '%s', got '%s'", expected, path)
 	}
 }
