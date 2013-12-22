@@ -3,17 +3,8 @@ package gtkui
 import (
 	. "github.com/dahenson/agenda/types"
 	"github.com/dahenson/agenda/ui"
-	"github.com/conformal/gotk3/glib"
 	"github.com/conformal/gotk3/gtk"
 )
-
-// interface compatible with Gotk3 gtk.Entry
-type Entry interface {
-	SetText(text string)
-	GetText() (string, error)
-	Activate() bool
-	Connect(signal string, f interface{}, data ...interface{}) (glib.SignalHandle, error)
-}
 
 type ListStore interface {
 	AddItem(item *Item)
@@ -25,7 +16,7 @@ type Window interface {
 
 type Ui struct {
 	liststore ListStore
-	entry Entry
+	entry *gtk.Entry
 	win Window
 }
 
@@ -33,7 +24,7 @@ func init() {
 	gtk.Init(nil)
 }
 
-func NewUi(ls ListStore, entry Entry, win Window) *Ui {
+func NewUi(ls ListStore, entry *gtk.Entry, win Window) *Ui {
 	return &Ui{liststore: ls, entry: entry, win: win}
 }
 
@@ -48,6 +39,7 @@ func (ui *Ui) GetEntryText() string {
 
 func (ui *Ui) SetAddItemCallback(callback ui.AddItemCallback) {
 	ui.entry.Connect("activate", callback)
+	ui.entry.Connect("icon-release", callback)
 }
 
 func (ui *Ui) ClearEntryText() {

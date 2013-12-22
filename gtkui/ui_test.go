@@ -42,7 +42,7 @@ func TestAddItem_ExpectItemAdded(t *testing.T) {
 // Given callback set
 // When entry activated
 // Then expect the callback gets called exactly one time
-func TestSetAddItemCallback_ExpectCallbackCalledOnAddButtonPressed(t *testing.T) {
+func TestSetAddItemCallback_WhenActivated_ExpectCallbackCalledOnAddButtonPressed(t *testing.T) {
 	timesCalled := 0
 	callback := func() {
 		timesCalled += 1
@@ -57,6 +57,13 @@ func TestSetAddItemCallback_ExpectCallbackCalledOnAddButtonPressed(t *testing.T)
 	if timesCalled != 1 {
 		t.Fatalf("Expected callback called %d times; it was actually called %d times", 1, timesCalled)
 	}
+}
+
+// Given callback set
+// When entry icon is released (signal "icon-release")
+// Then expect the callback gets called exactly one time
+func TestSetAddItemCallback_WhenIconReleased_ExpectCallbackCalledOnAddButtonPressed(t *testing.T) {
+	// TODO: Not yet sure how to trigger an icon-release event programmatically
 }
 
 // Given some text in item entry
