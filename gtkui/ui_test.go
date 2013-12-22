@@ -7,20 +7,16 @@ import (
 	"github.com/conformal/gotk3/gtk"
 )
 
-
-type FakeWindow struct {}
-func (FakeWindow) ShowAll() {}
-
 type UiFixture struct {
 	ls *testutils.FakeListStore
 	ui *Ui
-	win FakeWindow
+	win *gtk.Window
 }
 
 func initFixture() *UiFixture {
 	fixture := new(UiFixture)
 	fixture.ls = testutils.NewFakeListStore()
-	fixture.win = FakeWindow{}
+	fixture.win, _ = gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
 	entry, _ := gtk.EntryNew()
 	fixture.ui = NewUi(fixture.ls, entry, fixture.win)
 	return fixture
