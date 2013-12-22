@@ -2,8 +2,8 @@ package fs
 
 import (
 	"fmt"
-	"os"
 	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -56,12 +56,10 @@ func (fs *FakeFS) ReadFile(name string) ([]byte, error) {
 	}
 	return data, nil
 }
-
 func (fs *FakeFS) Write(name string, data []byte) (int, error) {
 	fs.files[name] = data
 	return len(data), nil
 }
-
 func (fs *FakeFS) IsNotExist(err error) bool {
 	if err == nil {
 		return false

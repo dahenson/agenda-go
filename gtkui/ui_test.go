@@ -4,46 +4,21 @@ import (
 	"testing"
 	"github.com/dahenson/agenda/testutils"
 	. "github.com/dahenson/agenda/types"
-	"github.com/conformal/gotk3/glib"
-	"log"
+	"github.com/conformal/gotk3/gtk"
 )
-
-type FakeEntry struct {
-	text string
-	onActivate func()
-}
-
-func NewFakeEntry() *FakeEntry {
-	return &FakeEntry{text: "", onActivate: func() {}}
-}
-
-func (e *FakeEntry) SetText(text string) { e.text = text }
-func (e *FakeEntry) GetText() (string, error) { return e.text, nil }
-func (e *FakeEntry) Activate() bool { e.onActivate(); return true }
-func (e *FakeEntry) Connect(signal string, f interface{}, data...interface{}) (glib.SignalHandle, error) {
-	callback, ok := f.(func())
-	if !ok {
-		log.Fatal("Failed to convert `f` to `func()`")
-	}
-	if signal == "activate" {
-		e.onActivate = callback
-	}
-	return 0, nil
-}
-
-type FakeWindow struct {}
-func (FakeWindow) ShowAll() {}
 
 type UiFixture struct {
 	ls *testutils.FakeListStore
 	ui *Ui
+	win *gtk.Window
 }
 
 func initFixture() *UiFixture {
 	fixture := new(UiFixture)
 	fixture.ls = testutils.NewFakeListStore()
-	fixture.ui = NewUi(fixture.ls, NewFakeEntry())
-	fixture.win = FakeWindow{}
+	fixture.win, _ = gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+	entry, _ := gtk.EntryNew()
+	fixture.ui = NewUi(fixture.ls, entry, fixture.win)
 	return fixture
 }
 
