@@ -1,4 +1,4 @@
-package main
+package types
 
 type Item struct {
 	Text string

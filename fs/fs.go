@@ -1,4 +1,4 @@
-package main
+package fs
 
 import (
 	"fmt"
@@ -7,9 +7,7 @@ import (
 	"strings"
 )
 
-var fs fileSystem = osFS{}
-
-type fileSystem interface {
+type FileSystem interface {
 	ReadFile(name string) ([]byte, error)
 	Write(name string, data []byte) (int, error)
 	IsNotExist(err error) bool
@@ -34,20 +32,24 @@ func (osFS) Write(name string, data []byte) (int, error) {
 	return file.Write(data)
 }
 
+var fs FileSystem = osFS{}
+
+func OsFs() FileSystem { return fs }
+
 const (
 	NOT_EXIST_PREFIX = "open "
 	NOT_EXIST_SUFFIX = ": no such file or directory"
 )
-type fakeFS struct {
+type FakeFS struct {
 	files map[string][]byte
 }
-func newFakeFS() *fakeFS {
-	return &fakeFS{files: make(map[string][]byte)}
+func NewFakeFS() *FakeFS {
+	return &FakeFS{files: make(map[string][]byte)}
 }
 func doesntExistErr(filename string) error {
 	return fmt.Errorf(NOT_EXIST_PREFIX+"%s"+NOT_EXIST_SUFFIX, filename)
 }
-func (fs *fakeFS) ReadFile(name string) ([]byte, error) {
+func (fs *FakeFS) ReadFile(name string) ([]byte, error) {
 	data, found := fs.files[name]
 	if !found {
 		return nil, doesntExistErr(name)
@@ -55,12 +57,12 @@ func (fs *fakeFS) ReadFile(name string) ([]byte, error) {
 	return data, nil
 }
 
-func (fs *fakeFS) Write(name string, data []byte) (int, error) {
+func (fs *FakeFS) Write(name string, data []byte) (int, error) {
 	fs.files[name] = data
 	return len(data), nil
 }
 
-func (fs *fakeFS) IsNotExist(err error) bool {
+func (fs *FakeFS) IsNotExist(err error) bool {
 	if err == nil {
 		return false
 	}

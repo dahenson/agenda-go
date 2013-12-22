@@ -11,6 +11,8 @@
   </object>
   <object class="GtkWindow" id="mainWindow">
     <property name="can_focus">False</property>
+    <property name="default_width">200</property>
+    <property name="default_height">300</property>
     <child>
       <object class="GtkGrid" id="grid1">
         <property name="visible">True</property>
@@ -46,7 +48,7 @@
                       <object class="GtkTreeViewColumn" id="completeColumn">
                         <property name="title" translatable="yes">Complete</property>
                         <child>
-                          <object class="GtkCellRendererToggle" id="cellrenderertoggle1"/>
+                          <object class="GtkCellRendererToggle" id="completeToggleRenderer"/>
                           <attributes>
                             <attribute name="active">1</attribute>
                           </attributes>
