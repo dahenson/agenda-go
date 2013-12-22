@@ -1,8 +1,10 @@
-package main
+package itemstore
 
 import (
 	"testing"
 	"log"
+	. "github.com/dahenson/agenda/types"
+	"github.com/dahenson/agenda/fs"
 )
 
 func initTestItemStore() ItemStore {
@@ -10,7 +12,7 @@ func initTestItemStore() ItemStore {
 	if !ok {
 		log.Fatal("Expected `is` to be an *itemStore")
 	}
-	is.fs = newFakeFS()
+	is.fs = fs.NewFakeFS()
 	return is
 }
 

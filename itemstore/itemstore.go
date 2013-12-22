@@ -1,22 +1,29 @@
-package main
+package itemstore
 
 import (
 	"encoding/json"
+	. "github.com/dahenson/agenda/types"
+	"github.com/dahenson/agenda/fs"
 )
 
 type ItemStore interface {
 	AddItem(item *Item) error
 	Items() ([]*Item, error)
+	MarkComplete(text string, complete bool) error
 }
 
 type itemStore struct {
 	filename string
-	fs fileSystem
+	fs fs.FileSystem
 	items []*Item
 }
 
 func NewItemStore(filename string) ItemStore {
-	return &itemStore{filename: filename, fs: fs, items: []*Item{}}
+	return &itemStore{filename: filename, fs: fs.OsFs(), items: []*Item{}}
+}
+
+func NewItemStoreWithFileSystem(filename string, filesys fs.FileSystem) ItemStore {
+	return &itemStore{filename: filename, fs: filesys, items: []*Item{}}
 }
 
 func (is *itemStore) Flush(items []*Item) error {
@@ -40,6 +47,25 @@ func (is *itemStore) AddItem(item *Item) error {
 		return err
 	}
 	is.items = temp
+	return nil
+}
+
+
+// TODO: use ID instead of title once implemented
+func (is *itemStore) MarkComplete(text string, complete bool) error {
+	for _, item := range is.items {
+		// do nothing if no change to item.Complete
+		if item.Text == text {
+			if item.Complete != complete {
+				item.Complete = complete
+				if err := is.Flush(is.items); err != nil {
+					item.Complete = !complete // on error, undo change
+					return err
+				}
+			}
+			break
+		}
+	}
 	return nil
 }
 
