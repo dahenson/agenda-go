@@ -1,17 +1,23 @@
-package main
+package itemstore
 
 import (
 	"testing"
+	"log"
+	. "github.com/dahenson/agenda/types"
+	"github.com/dahenson/agenda/fs"
 )
 
-func initTestItemStore() *FSItemStore {
-	is := NewFSItemStore("default.txt")
-	is.fs = newFakeFS()
+func initTestItemStore() ItemStore {
+	is, ok := (NewItemStore("default.txt")).(*itemStore)
+	if !ok {
+		log.Fatal("Expected `is` to be an *itemStore")
+	}
+	is.fs = fs.NewFakeFS()
 	return is
 }
 
-func eq(i1, i2 Item) bool {
-	return i1.Text() == i2.Text()
+func eq(i1, i2 *Item) bool {
+	return i1.Text == i2.Text
 }
 
 func TestAddItem_WhenEmpty_ExpectItemInItems(t *testing.T) {
@@ -27,7 +33,7 @@ func TestAddItem_WhenEmpty_ExpectItemInItems(t *testing.T) {
 	}
 	if len(items) != 1 {
 		for _, item := range items {
-			println(item.Text())
+			println(item.Text)
 		}
 		t.Fatalf("Expected 1 item, but found %d", len(items))
 	}
@@ -38,8 +44,9 @@ func TestAddItem_WhenEmpty_ExpectItemInItems(t *testing.T) {
 }
 
 func TestAddItem_WhenTwoItemsAdded_ExpectBothItemsInItems(t *testing.T) {
-	addedItems := []Item{NewItem("First item"), NewItem("Second item")}
 	is := initTestItemStore()
+	addedItems := []*Item{NewItem("First item"), NewItem("Second item")}
+
 	for _, item := range addedItems {
 		if err := is.AddItem(item); err != nil {
 			t.Fatal("Unexpected err:", err)
@@ -54,12 +61,12 @@ func TestAddItem_WhenTwoItemsAdded_ExpectBothItemsInItems(t *testing.T) {
 	if len(storedItems) != len(addedItems) {
 		println("Added items:")
 		for _, item := range addedItems {
-			println(item.Text())
+			println(item.Text)
 		}
 
 		println("\nStored items:")
 		for _, item := range storedItems {
-			println(item.Text())
+			println(item.Text)
 		}
 		t.Fatalf("Expected %d items, but found %d", len(addedItems), len(storedItems))
 	}

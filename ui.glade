@@ -5,10 +5,14 @@
     <columns>
       <!-- column-name Items -->
       <column type="gchararray"/>
+      <!-- column-name Complete -->
+      <column type="gboolean"/>
     </columns>
   </object>
   <object class="GtkWindow" id="mainWindow">
     <property name="can_focus">False</property>
+    <property name="default_width">200</property>
+    <property name="default_height">300</property>
     <child>
       <object class="GtkGrid" id="grid1">
         <property name="visible">True</property>
@@ -39,6 +43,17 @@
                     <property name="search_column">1</property>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection" id="treeview-selection"/>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="completeColumn">
+                        <property name="title" translatable="yes">Complete</property>
+                        <child>
+                          <object class="GtkCellRendererToggle" id="completeToggleRenderer"/>
+                          <attributes>
+                            <attribute name="active">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
                     </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="itemsColumn">
