@@ -46,6 +46,7 @@
                     </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="completeColumn">
+                        <property name="sizing">autosize</property>
                         <property name="title" translatable="yes">Complete</property>
                         <child>
                           <object class="GtkCellRendererToggle" id="completeToggleRenderer"/>
@@ -61,6 +62,7 @@
                         <child>
                           <object class="GtkCellRendererText" id="cellrenderertext1"/>
                           <attributes>
+                            <attribute name="strikethrough">1</attribute>
                             <attribute name="text">0</attribute>
                           </attributes>
                         </child>
