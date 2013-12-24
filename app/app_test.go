@@ -12,6 +12,14 @@ type AppTest struct {
 	app *App
 }
 
+func (fixture *AppTest) AddItem(item *Item) error {
+	if err := fixture.is.AddItem(item); err != nil {
+		return err
+	}
+	fixture.ui.AddItem(item)
+	return nil
+}
+
 func InitFixture() *AppTest {
 	fixture := new(AppTest)
 	fixture.ui = testutils.NewFakeUi()
@@ -105,7 +113,7 @@ func TestOnAddItem_WhenItemStoreReturnsError_ExpectUIDisplaysError(t *testing.T)
 // Then expect that the UI displays all 3 items
 func TestLoadItems_ExpectUIDisplaysAllItemsInItemStore(t *testing.T) {
 	fixture := InitFixture()
-	items := []*Item {
+	items := []*Item{
 		NewItem("Item1"),
 		NewItem("Item2"),
 		NewItem("Item3"),
@@ -129,5 +137,32 @@ func TestLoadItems_ExpectUIDisplaysAllItemsInItemStore(t *testing.T) {
 		if err := testutils.ExpectText(item.Text, actItems[i].Text); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+// Given one incomplete item
+// When item toggled
+// Then expect 'Complete' state changes in ItemStore
+func TestToggleItem_ExpectItemStoreUpdated(t *testing.T) {
+	fixture := InitFixture()
+
+	// Given one incomplete item
+	item := NewItem("An incomplete item")
+	fixture.AddItem(item)
+
+	// When item toggled
+	fixture.ui.ToggleItem(item)
+
+	// Then expect one item in itemstore
+	items, err := fixture.is.Items()
+	if err != nil {
+		t.Fatal("Unexpected err:", err)
+	}
+	if err := testutils.ExpectItemCount(1, len(items)); err != nil {
+		t.Fatal(err)
+	}
+
+	if exp, act := true, items[0].Complete; act != exp {
+		t.Errorf("Expected item.Complete '%v'; got '%v'", exp, act)
 	}
 }

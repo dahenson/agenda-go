@@ -9,7 +9,7 @@ import (
 type ItemStore interface {
 	AddItem(item *Item) error
 	Items() ([]*Item, error)
-	MarkComplete(text string, complete bool) error
+	MarkComplete(id string, complete bool) error
 }
 
 type itemStore struct {
@@ -51,11 +51,10 @@ func (is *itemStore) AddItem(item *Item) error {
 }
 
 
-// TODO: use ID instead of title once implemented
-func (is *itemStore) MarkComplete(text string, complete bool) error {
+func (is *itemStore) MarkComplete(id string, complete bool) error {
 	for _, item := range is.items {
 		// do nothing if no change to item.Complete
-		if item.Text == text {
+		if item.Id == id {
 			if item.Complete != complete {
 				item.Complete = complete
 				if err := is.Flush(is.items); err != nil {

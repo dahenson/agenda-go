@@ -4,7 +4,7 @@ import (
 	"testing"
 	"github.com/dahenson/agenda/testutils"
 	. "github.com/dahenson/agenda/types"
-	"github.com/conformal/gotk3/gtk"
+	"github.com/weberc2/gotk3/gtk"
 )
 
 type UiFixture struct {
@@ -16,9 +16,9 @@ type UiFixture struct {
 func initFixture() *UiFixture {
 	fixture := new(UiFixture)
 	fixture.ls = testutils.NewFakeListStore()
-	fixture.win, _ = gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+	win, _ := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
 	entry, _ := gtk.EntryNew()
-	fixture.ui = NewUi(fixture.ls, entry, fixture.win)
+	fixture.ui = NewUi(fixture.ls, entry, win)
 	return fixture
 }
 
@@ -79,3 +79,18 @@ func TestClearEntryText_ExpectEntryTextCleared(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestSetToggleItemCallback_WhenItemToggled_ExpectCallbackCalled(t *testing.T) {
+	fixture := initFixture()
+
+	timesCalled := 0
+	fixture.ui.SetToggleItemCallback(func(id string, toggled bool) {
+		timesCalled++
+	})
+
+	fixture.ls.Toggle("", false)
+	if timesCalled != 1 {
+		t.Fatalf("Expected callback called %d times; actually called %d times", 1, timesCalled)
+	}
+}
+

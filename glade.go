@@ -1,16 +1,17 @@
 package main
 
 import (
-	"github.com/conformal/gotk3/gtk"
 	"github.com/dahenson/agenda/gtkui"
 	"github.com/dahenson/agenda/gtkui/widgets"
+	"github.com/weberc2/gotk3/gtk"
 	"log"
 )
 
 const (
-	entryName = "itemTextEntry"
-	listStoreName = "itemsListStore"
-	windowName = "mainWindow"
+	entryName          = "itemTextEntry"
+	listStoreName      = "itemsListStore"
+	windowName         = "mainWindow"
+	toggleRendererName = "completeToggleRenderer"
 )
 
 func loadEntry(b *gtk.Builder) *gtk.Entry {
@@ -34,7 +35,9 @@ func loadListStore(b *gtk.Builder) gtkui.ListStore {
 	if !ok {
 		log.Fatalf("Failed to type-assert '%s' to gtk.ListStore", listStoreName)
 	}
-	return widgets.NewListStore(ls)
+
+	renderer := loadToggleRenderer(b)
+	return widgets.NewListStore(ls, renderer)
 }
 
 func loadWindow(b *gtk.Builder) gtkui.Window {
@@ -48,6 +51,18 @@ func loadWindow(b *gtk.Builder) gtkui.Window {
 	}
 	win.Connect("destroy", gtk.MainQuit)
 	return win
+}
+
+func loadToggleRenderer(b *gtk.Builder) *gtk.CellRendererToggle {
+	obj, err := b.GetObject(toggleRendererName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tog, ok := obj.(*gtk.CellRendererToggle)
+	if !ok {
+		log.Fatalf("Failed to type-assert '%s' to gtk.CellRendererToggle", toggleRendererName)
+	}
+	return tog
 }
 
 func load(gladeFile string) *gtkui.Ui {
