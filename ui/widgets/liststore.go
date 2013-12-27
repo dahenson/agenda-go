@@ -1,8 +1,8 @@
 package widgets
 
 import (
-	"github.com/weberc2/gotk3/gtk"
 	. "github.com/dahenson/agenda/types"
+	"github.com/weberc2/gotk3/gtk"
 	"log"
 )
 
@@ -11,10 +11,17 @@ type row struct {
 	iter *gtk.TreeIter
 }
 
+type style int
+
 const (
+	normal style = 0
+	oblique style = 1
+	italic style = 2
+	COL_STYLE    = 2
 	COL_COMPLETE = 1
 	COL_TEXT     = 0
 )
+
 
 type ListStore struct {
 	*gtk.ListStore
@@ -25,12 +32,19 @@ func NewListStore(ls *gtk.ListStore) *ListStore {
 	return &ListStore{ListStore: ls, rows: []*row{}}
 }
 
+func determineStyle(complete bool) style {
+	if complete {
+		return italic
+	}
+	return normal
+}
+
 func (ls *ListStore) AddItem(item *Item) {
 	r := new(row)
 	var iter gtk.TreeIter
 	ls.Append(&iter)
-	cols := []int{COL_COMPLETE, COL_TEXT}
-	vals := []interface{}{item.Complete, item.Text}
+	cols := []int{COL_COMPLETE, COL_TEXT, COL_STYLE}
+	vals := []interface{}{item.Complete, item.Text, determineStyle(item.Complete)}
 	if err := ls.Set(&iter, cols, vals); err != nil {
 		log.Fatal(err)
 	}
@@ -70,15 +84,17 @@ func (ls *ListStore) getText(iter *gtk.TreeIter) string {
 }
 
 func (ls *ListStore) get(r *row) *Item {
-	return &Item {
-		Id: r.id,
-		Text: ls.getText(r.iter),
+	return &Item{
+		Id:       r.id,
+		Text:     ls.getText(r.iter),
 		Complete: ls.getComplete(r.iter),
 	}
 }
 
 func (ls *ListStore) setComplete(iter *gtk.TreeIter, complete bool) error {
-	return ls.Set(iter, []int{COL_COMPLETE}, []interface{}{complete})
+	cols := []int{COL_COMPLETE, COL_STYLE}
+	vals := []interface{}{complete, determineStyle(complete)}
+	return ls.Set(iter, cols, vals)
 }
 
 func (ls *ListStore) Items() []*Item {

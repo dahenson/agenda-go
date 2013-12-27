@@ -9,6 +9,8 @@ var gladestr = `<?xml version="1.0" encoding="UTF-8"?>
       <column type="gchararray"/>
       <!-- column-name Complete -->
       <column type="gboolean"/>
+      <!-- column-name Style -->
+      <column type="gint"/>
     </columns>
   </object>
   <object class="GtkWindow" id="mainWindow">
@@ -65,6 +67,7 @@ var gladestr = `<?xml version="1.0" encoding="UTF-8"?>
                           <object class="GtkCellRendererText" id="cellrenderertext1"/>
                           <attributes>
                             <attribute name="strikethrough">1</attribute>
+                            <attribute name="style">2</attribute>
                             <attribute name="text">0</attribute>
                           </attributes>
                         </child>
