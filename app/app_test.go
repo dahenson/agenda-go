@@ -1,168 +1,327 @@
 package app
 
 import (
-	"github.com/dahenson/agenda/testutils"
+	"fmt"
+	. "github.com/dahenson/agenda/testutils"
 	. "github.com/dahenson/agenda/types"
+	"github.com/dahenson/agenda/ui"
 	"testing"
 )
 
-type AppTest struct {
-	ui  *testutils.FakeUi
-	is  *testutils.FakeItemStore
-	app *App
+type MockItemStore struct {
+	saveCalls [][]*Item
+	saveErr   error
+	loadItems []*Item
+	loadErr   error
 }
 
-func (fixture *AppTest) AddItem(item *Item) error {
-	if err := fixture.is.AddItem(item); err != nil {
-		return err
-	}
-	fixture.ui.AddItem(item)
-	return nil
-}
+func (is *MockItemStore) TimesSaveCalled() int { return len(is.saveCalls) }
 
-func InitFixture() *AppTest {
-	fixture := new(AppTest)
-	fixture.ui = testutils.NewFakeUi()
-	fixture.is = testutils.NewFakeItemStore("default.txt")
-	fixture.app = NewApp(fixture.is, fixture.ui)
-	return fixture
-}
-
-// Given an empty itemstore
-// When user enters some text
-// And 'add' button is pressed
-// Expect itemstore contains one item
-// And that item has the same text as entered by the user
-// And that the ui displays the item
-// And that the ui entry text is cleared
-func TestOnAddItem_ExpectOneItemAdded(t *testing.T) {
-	fixture := InitFixture()
-	expText := "Some text"
-
-	// When user enters some text
-	fixture.ui.SetEntryText(expText)
-	// and 'add' button is pressed
-	fixture.ui.PressAddButton()
-
-	// Expect itemstore contains one item
-	items, err := fixture.is.Items()
-	if err != nil {
-		t.Fatal("Untestutils.Expected err:", err)
-	}
-	if err := testutils.ExpectItemCount(1, len(items)); err != nil {
-		t.Fatal(err)
-	}
-
-	// Expect that the correct item text was stored
-	if err := testutils.ExpectText(expText, items[0].Text); err != nil {
-		t.Fatal(err)
-	}
-
-	// Expect UI displays one item
-	items = fixture.ui.Items()
-	if err := testutils.ExpectItemCount(1, len(items)); err != nil {
-		t.Fatal(err)
-	}
-
-	// Expect the UI displays the correct text
-	if err := testutils.ExpectText(expText, items[0].Text); err != nil {
-		t.Fatal(err)
-	}
-
-	// Expect that the entry text is cleared
-	if err := testutils.ExpectText("", fixture.ui.GetEntryText()); err != nil {
-		t.Fatal(err)
+func NewMockItemStore() *MockItemStore {
+	return &MockItemStore{
+		saveCalls: [][]*Item{},
+		saveErr:   nil,
+		loadItems: []*Item{},
+		loadErr:   nil,
 	}
 }
 
-// Given empty ItemStore
-// When user enters some text
-// And the 'add' button is pressed
-// And the itemstore returns an error
-// Then testutils.Expect the UI displays an error message
-// And the UI doesn't display any items
-// And testutils.Expect the text entry retains the entered text
-func TestOnAddItem_WhenItemStoreReturnsError_ExpectUIDisplaysError(t *testing.T) {
-	fixture := InitFixture()
+func (is *MockItemStore) Save(items []*Item) error {
+	is.saveCalls = append(is.saveCalls, items)
+	return is.saveErr
+}
 
+func (is *MockItemStore) Load() ([]*Item, error) {
+	return is.loadItems, is.loadErr
+}
+
+type Context struct {
+	Entry     *FakeEntry
+	ItemStore *MockItemStore
+	AddButton *FakeAddButton
+	ToggleButton *FakeToggleButton
+	*App
+}
+
+func setup() *Context {
+	ctx := new(Context)
+	ctx.ItemStore = NewMockItemStore()
+	ctx.Entry = NewFakeEntry()
+	ctx.AddButton = NewFakeAddButton()
+	ctx.ToggleButton = NewFakeToggleButton()
+	ui := ui.NewUi(ctx.Entry, NewFakeListStore(), ctx.AddButton, ctx.ToggleButton, func(){})
+	ctx.App = NewApp(ctx.ItemStore, ui)
+	return ctx
+}
+
+// Given empty itemstore
+// And some text in entry
+// When Add button clicked
+// Then expect `ItemStore.Save()` called one time
+// And expect `ItemStore.Save()` receives the new item as its parameter
+func TestAddItem_GivenEmptyItemStore_ExpectItemSavedAndAddedToUi(t *testing.T) {
+	// Given empty itemstore
+	ctx := setup()
+
+	// And some text in entry
+	text := "some text"
+	ctx.Entry.SetText(text)
+
+	// When Add button clicked
+	ctx.AddButton.Click()
+
+	// Then expect ItemStore.Save() called one time
+	if err := ExpectCount(1, ctx.ItemStore.TimesSaveCalled()); err != nil {
+		t.Fatal(err)
+	}
+
+	// And expect ItemStore.Save() receives the new item as its parameter
+	act := ctx.ItemStore.saveCalls[0]
+	if err := ExpectCount(1, len(act)); err != nil {
+		t.Fatal(err)
+	}
+	if err := Expect(text, act[0].Text); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Given empty itemstore
+// And some text in entry
+// When Add button clicked
+// Then expect UI contains one item
+// And that item's text matches entered text
+func TestAddItem_ExpectItemAddedToUi(t *testing.T) {
+	// Given empty itemstore
+	ctx := setup()
+
+	// And some text in entry
+	enteredText := "Some text"
+	ctx.Entry.SetText(enteredText)
+
+	// When OnAddItem() caled
+	ctx.App.OnAddItem()
+
+	// Then expect UI contains one item
+	if err := ExpectCount(1, len(ctx.ui.Items())); err != nil {
+		t.Fatal(err)
+	}
+
+	// And that item's text matches entered text
+	if err := Expect(enteredText, ctx.ui.Items()[0].Text); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Given empty itemstore
+// And some text in entry
+// When Add button clicked
+// Then expect entry cleared
+func TestAddItem_ExpectEntryCleared(t *testing.T) {
+	// Given empty itemstore
+	ctx := setup()
+
+	// And some text in entry
+	ctx.Entry.SetText("Some text")
+
+	// When Add button clicked
+	ctx.AddButton.Click()
+
+	// Then expect entry cleared
+	if err := Expect("", ctx.Entry.GetText()); err != nil {
+		t.Fatal("Expecting entry has been cleared:", err)
+	}
+}
+
+// Given empty itemstore
+// And some text in entry
+// And ItemStore.Save() will return an error
+// When Add button clicked
+// Then expect UI contains no items
+func TestAddItem_WhenSaveReturnsErr_ExpectItemNotAdded(t *testing.T) {
+	// Given empty itemstore
+	ctx := setup()
+	// And Some text in entry
+	ctx.Entry.SetText("Some text")
+	// And ItemStore.Save() will return an error
+	ctx.ItemStore.saveErr = fmt.Errorf("An error")
+
+	// When Add button clicked
+	ctx.AddButton.Click()
+
+	// Expect UI contains no items
+	if err := ExpectCount(0, len(ctx.ui.Items())); err != nil {
+		t.Fatal("Expecting UI contains no items:\n", err)
+	}
+}
+
+// Given empty itemstore
+// And some text in entry
+// And ItemStore.Save() will return an error
+// When Add button clicked
+// The expect entry text unchanged
+func TestAddItem_WhenSaveReturnsErr_ExpectEntryTextUnchanged(t *testing.T) {
+	// Given empty itemstore
+	ctx := setup()
+
+	// And some text in entry
 	enteredText := "Some Text"
+	ctx.Entry.SetText(enteredText)
 
-	fixture.ui.SetEntryText(enteredText)
-	expErrText := "Failed to add item"
-	fixture.is.ReturnErrorOnAddItem(expErrText)
-	fixture.ui.PressAddButton()
+	// And ItemStore.Save() will return an error
+	ctx.ItemStore.saveErr = fmt.Errorf("Some err")
 
-	// Expect the UI displays the correct error text
-	if err := testutils.ExpectText(expErrText, fixture.ui.CurrentErrorMessage()); err != nil {
+	// When Add button clicked
+	ctx.AddButton.Click()
+
+	// The expect entry text unchanged
+	if err := Expect(enteredText, ctx.Entry.GetText()); err != nil {
+		t.Fatal("Expecting entry's text unchanged:", err)
+	}
+}
+
+// Given one item added
+// And some text in entry
+// When add button clicked
+// Then expect ItemStore.Save() called twice
+// And expect 2 items in last call to ItemStore.Save()
+// And expect the last item in last call to ItemStore.Save() has text matching the entered text
+func TestAddItem_GivenOneItemAdded_ExpectNewItemSaved(t *testing.T) {
+	ctx := setup()
+
+	// Given one item added
+	ctx.Entry.SetText("First item")
+	ctx.AddButton.Click()
+
+	// And some text in entry
+	enteredText := "Second item"
+	ctx.Entry.SetText(enteredText)
+
+	// When add button clicked
+	ctx.AddButton.Click()
+
+	// Then expect ItemStore.Save() called twice
+	if err := ExpectCount(2, len(ctx.ItemStore.saveCalls)); err != nil {
 		t.Fatal(err)
 	}
 
-	// Expect no items were added to the UI
-	if err := testutils.ExpectItemCount(0, len(fixture.ui.Items())); err != nil {
+	// And expect 2 items in last call to ItemStore.Save()
+	lastCall := ctx.ItemStore.saveCalls[1]
+	if err := ExpectCount(2, len(lastCall)); err != nil {
 		t.Fatal(err)
 	}
 
-	// Expect the text entry retains the entered text
-	if err := testutils.ExpectText(enteredText, fixture.ui.GetEntryText()); err != nil {
+	// And expect the last item in last call to ItemStore.Save() has text matching the entered text
+	lastItemInLastCall := lastCall[1]
+	if err := Expect(enteredText, lastItemInLastCall.Text); err != nil {
 		t.Fatal(err)
 	}
 }
 
-// Given 3 items in itemstore
-// When LoadItems() called
-// Then expect that the UI displays all 3 items
-func TestLoadItems_ExpectUIDisplaysAllItemsInItemStore(t *testing.T) {
-	fixture := InitFixture()
-	items := []*Item{
-		NewItem("Item1"),
-		NewItem("Item2"),
-		NewItem("Item3"),
-	}
-	for _, item := range items {
-		if err := fixture.is.AddItem(item); err != nil {
-			t.Fatal("Unexpected err:", err)
-		}
-	}
+// Given one item added
+// And some text in entry
+// When add button clicked
+// Then expect 2 items in UI
+// And expect the last item in UI has text matching the entered text
+func TestAddItem_GivenOneItemAdded_ExpectNewItemAddedToUi(t *testing.T) {
+	ctx := setup()
 
-	if err := fixture.app.LoadItems(); err != nil {
-		t.Fatal("Unexpected err:", err)
-	}
+	// Given one item added
+	ctx.Entry.SetText("First item")
+	ctx.AddButton.Click()
 
-	actItems := fixture.ui.Items()
-	if err := testutils.ExpectItemCount(len(items), len(actItems)); err != nil {
+	// And some text in entry
+	enteredText := "Second item"
+	ctx.Entry.SetText(enteredText)
+
+	// When add button clicked
+	ctx.AddButton.Click()
+
+	// Then expect 2 items in UI
+	items := ctx.ui.Items()
+	if err := ExpectCount(2, len(items)); err != nil {
 		t.Fatal(err)
 	}
 
-	for i, item := range items {
-		if err := testutils.ExpectText(item.Text, actItems[i].Text); err != nil {
-			t.Fatal(err)
-		}
+	// And expect the last item in UI has text matching the entered text
+	lastUiItem := items[1]
+	if err := Expect(enteredText, lastUiItem.Text); err != nil {
+		t.Fatal(err)
 	}
 }
 
-// Given one incomplete item
+// Given empty itemstore
+// When application loaded
+// Expect UI displays no items
+func TestLoad_GivenEmptyItemStore_ExpectNoItems(t *testing.T) {
+	// Given empty itemstore
+	ctx := setup()
+
+	// When application loaded
+	ctx.Load()
+
+	// expect the UI displays no items
+	if err := ExpectCount(0, len(ctx.ui.Items())); err != nil {
+		t.Fatal()
+	}
+}
+
+// Given one item added
 // When item toggled
-// Then expect 'Complete' state changes in ItemStore
-func TestToggleItem_ExpectItemStoreUpdated(t *testing.T) {
-	fixture := InitFixture()
+// Then expect ItemStore.Save() called twice
+// And expect the last call to contain all the items in the UI
+func TestToggleItem(t *testing.T) {
+	ctx := setup()
 
-	// Given one incomplete item
-	item := NewItem("An incomplete item")
-	fixture.AddItem(item)
+	// Given one item added
+	ctx.Entry.SetText("An item")
+	ctx.AddButton.Click()
+	item := ctx.ui.Items()[0]
 
 	// When item toggled
-	fixture.ui.ToggleItem(item)
+	// Sending "false" for the state because it's the responsibility of the button's
+	// callback to update the button state
+	ctx.ToggleButton.Click(item.Id, false)
 
-	// Then expect one item in itemstore
-	items, err := fixture.is.Items()
-	if err != nil {
-		t.Fatal("Unexpected err:", err)
-	}
-	if err := testutils.ExpectItemCount(1, len(items)); err != nil {
+	// Then expect `ItemStore.Save()` called twice
+	calls := ctx.ItemStore.saveCalls
+	if err := ExpectCount(2, len(calls)); err != nil {
 		t.Fatal(err)
 	}
 
-	if exp, act := true, items[0].Complete; act != exp {
-		t.Errorf("Expected item.Complete '%v'; got '%v'", exp, act)
+	// And expect the last call to contain a 1-length list
+	lastCall := calls[1]
+	if err := ExpectCount(1, len(lastCall)); err != nil {
+		t.Fatal(err)
+	}
+
+	// And expect the item in that list to have a `Complete` value of `true`
+	if err := Expect(true, lastCall[0].Complete); err != nil {
+		t.Fatal("Expecting complete value:", err)
+	}
+}
+
+// Given one item added
+// And given ItemStore.Save() will return an error
+// When item toggled
+// Then expect the Ui shows the item is still incomplete
+func TestToggleItem_WhenSaveReturnsErr_ExpectNoChangetoUi(t *testing.T) {
+	ctx := setup()
+
+	// Given one item added
+	ctx.Entry.SetText("An item")
+	ctx.AddButton.Click()
+	item := ctx.ui.Items()[0]
+
+	// And given ItemStore.Save() will return an error
+	ctx.ItemStore.saveErr = fmt.Errorf("ItemStore: error saving")
+
+	// When item toggled
+	// Sending "false" for the state because it's the responsibility of the button's
+	// callback to update the button state
+	ctx.ToggleButton.Click(item.Id, false)
+
+	// Then expect the Ui shows the item is still incomplete
+	if err := Expect(false, item.Complete); err != nil {
+		t.Fatal("Expecting item is complete:", err)
 	}
 }

@@ -2,27 +2,28 @@ package app
 
 import (
 	"github.com/dahenson/agenda/itemstore"
-	"github.com/dahenson/agenda/ui"
 	. "github.com/dahenson/agenda/types"
+	"github.com/dahenson/agenda/ui"
+	"log"
 )
 
 type App struct {
-	is itemstore.ItemStore
-	ui ui.Ui
+	itemstore itemstore.ItemStore
+	ui        ui.Ui
 }
 
-func NewApp (is itemstore.ItemStore, ui ui.Ui) *App {
-	a := &App{is: is, ui: ui}
-	ui.SetAddItemCallback(a.OnAddItem)
-	ui.SetToggleItemCallback(a.OnToggleItem)
+func NewApp(is itemstore.ItemStore, ui ui.Ui) *App {
+	a := &App{itemstore: is, ui: ui}
+	ui.SetAddCallback(a.OnAddItem)
+	ui.SetToggleCallback(a.OnToggleItem)
 	return a
 }
 
 func (a *App) OnAddItem() {
-	text := a.ui.GetEntryText()
-	item := NewItem(text)
-	if err := a.is.AddItem(item); err != nil {
-		a.ui.NotifyError("Failed to add item")
+	item := NewItem(a.ui.GetEntryText())
+	if err := a.itemstore.Save(append(a.ui.Items(), item)); err != nil {
+		a.ui.NotifyError(err)
+		log.Println(err)
 		return
 	}
 	a.ui.AddItem(item)
@@ -30,22 +31,21 @@ func (a *App) OnAddItem() {
 }
 
 func (a *App) OnToggleItem(id string, toggled bool) {
-	if err := a.is.MarkComplete(id, !toggled); err != nil {
-		a.ui.NotifyError("Oops, there seems to be a problem saving your change!")
-		return
+	a.ui.SetItemComplete(id, !toggled)
+	if err := a.itemstore.Save(a.ui.Items()); err != nil {
+		// reset UI on error
+		a.ui.SetItemComplete(id, toggled)
 	}
-	a.ui.SetToggled(id, !toggled)
 }
 
-func (a *App) LoadItems() error {
-	items, err := a.is.Items()
+func (a *App) Load() {
+	items, err := a.itemstore.Load()
 	if err != nil {
-		return err
+		a.ui.NotifyError(err)
+		return
 	}
 
 	for _, item := range items {
 		a.ui.AddItem(item)
 	}
-
-	return nil
 }

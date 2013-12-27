@@ -6,6 +6,7 @@ import (
 	. "github.com/dahenson/agenda/app"
 	"github.com/dahenson/agenda/itemstore"
 	. "github.com/dahenson/agenda/fs"
+	"github.com/dahenson/agenda/ui/widgets"
 )
 
 func main() {
@@ -14,9 +15,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ui := load("ui.glade")
+	ui := widgets.Load()
 	is := itemstore.NewItemStore(path + "default.txt")
 	app := NewApp(is, ui)
-	app.LoadItems()
+	app.Load()
 	ui.Run()
 }
