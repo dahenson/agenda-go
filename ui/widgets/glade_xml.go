@@ -17,8 +17,8 @@ var gladestr = `<?xml version="1.0" encoding="UTF-8"?>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Agenda</property>
     <property name="window_position">center</property>
-    <property name="default_width">200</property>
-    <property name="default_height">300</property>
+    <property name="default_width">350</property>
+    <property name="default_height">430</property>
     <child>
       <object class="GtkGrid" id="grid1">
         <property name="visible">True</property>
@@ -70,6 +70,7 @@ var gladestr = `<?xml version="1.0" encoding="UTF-8"?>
                         <property name="sort_column_id">1</property>
                         <child>
                           <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                          <property name="ypad">6</property>
                           <attributes>
                             <attribute name="strikethrough">1</attribute>
                             <attribute name="style">2</attribute>
