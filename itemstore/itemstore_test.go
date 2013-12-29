@@ -17,7 +17,7 @@ func setup() *Context {
 }
 
 func eq(i1, i2 *Item) bool {
-	return i1.Id == i2.Id && i1.Complete == i2.Complete && i1.Text == i2.Text
+	return i1.Id() == i2.Id() && i1.Complete() == i2.Complete() && i1.Text() == i2.Text()
 }
 
 func expectItemListsEq(exp, act []*Item) error {

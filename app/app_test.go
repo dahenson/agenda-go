@@ -36,11 +36,18 @@ func (is *MockItemStore) Load() ([]*Item, error) {
 }
 
 type Context struct {
-	Entry     *FakeEntry
-	ItemStore *MockItemStore
-	AddButton *FakeAddButton
+	Entry        *FakeEntry
+	ItemStore    *MockItemStore
+	AddButton    *FakeAddButton
 	ToggleButton *FakeToggleButton
 	*App
+}
+
+func (ctx *Context) GivenNItemsAdded(n int) {
+	for i:=0; i<n; i++ {
+		ctx.Entry.SetText(fmt.Sprintf("item %d", i))
+		ctx.AddButton.Click()
+	}
 }
 
 func setup() *Context {
@@ -49,8 +56,8 @@ func setup() *Context {
 	ctx.Entry = NewFakeEntry()
 	ctx.AddButton = NewFakeAddButton()
 	ctx.ToggleButton = NewFakeToggleButton()
-	ui := ui.NewUi(ctx.Entry, NewFakeListStore(), ctx.AddButton, ctx.ToggleButton, func(){})
-	ctx.App = NewApp(ctx.ItemStore, ui)
+	ui := ui.NewUi(ctx.Entry, NewFakeListStore(), ctx.AddButton, ctx.ToggleButton, func() {})
+	ctx.App = NewApp(ctx.ItemStore, ui, 10)
 	return ctx
 }
 
@@ -80,7 +87,7 @@ func TestAddItem_GivenEmptyItemStore_ExpectItemSavedAndAddedToUi(t *testing.T) {
 	if err := ExpectCount(1, len(act)); err != nil {
 		t.Fatal(err)
 	}
-	if err := Expect(text, act[0].Text); err != nil {
+	if err := Expect(text, act[0].Text()); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -107,7 +114,7 @@ func TestAddItem_ExpectItemAddedToUi(t *testing.T) {
 	}
 
 	// And that item's text matches entered text
-	if err := Expect(enteredText, ctx.ui.Items()[0].Text); err != nil {
+	if err := Expect(enteredText, ctx.ui.Items()[0].Text()); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -189,8 +196,7 @@ func TestAddItem_GivenOneItemAdded_ExpectNewItemSaved(t *testing.T) {
 	ctx := setup()
 
 	// Given one item added
-	ctx.Entry.SetText("First item")
-	ctx.AddButton.Click()
+	ctx.GivenNItemsAdded(1)
 
 	// And some text in entry
 	enteredText := "Second item"
@@ -212,7 +218,7 @@ func TestAddItem_GivenOneItemAdded_ExpectNewItemSaved(t *testing.T) {
 
 	// And expect the last item in last call to ItemStore.Save() has text matching the entered text
 	lastItemInLastCall := lastCall[1]
-	if err := Expect(enteredText, lastItemInLastCall.Text); err != nil {
+	if err := Expect(enteredText, lastItemInLastCall.Text()); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -226,8 +232,7 @@ func TestAddItem_GivenOneItemAdded_ExpectNewItemAddedToUi(t *testing.T) {
 	ctx := setup()
 
 	// Given one item added
-	ctx.Entry.SetText("First item")
-	ctx.AddButton.Click()
+	ctx.GivenNItemsAdded(1)
 
 	// And some text in entry
 	enteredText := "Second item"
@@ -244,7 +249,7 @@ func TestAddItem_GivenOneItemAdded_ExpectNewItemAddedToUi(t *testing.T) {
 
 	// And expect the last item in UI has text matching the entered text
 	lastUiItem := items[1]
-	if err := Expect(enteredText, lastUiItem.Text); err != nil {
+	if err := Expect(enteredText, lastUiItem.Text()); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -273,14 +278,13 @@ func TestToggleItem(t *testing.T) {
 	ctx := setup()
 
 	// Given one item added
-	ctx.Entry.SetText("An item")
-	ctx.AddButton.Click()
+	ctx.GivenNItemsAdded(1)
 	item := ctx.ui.Items()[0]
 
 	// When item toggled
 	// Sending "false" for the state because it's the responsibility of the button's
 	// callback to update the button state
-	ctx.ToggleButton.Click(item.Id, false)
+	ctx.ToggleButton.Click(item.Id(), false)
 
 	// Then expect `ItemStore.Save()` called twice
 	calls := ctx.ItemStore.saveCalls
@@ -295,7 +299,7 @@ func TestToggleItem(t *testing.T) {
 	}
 
 	// And expect the item in that list to have a `Complete` value of `true`
-	if err := Expect(true, lastCall[0].Complete); err != nil {
+	if err := Expect(true, lastCall[0].Complete()); err != nil {
 		t.Fatal("Expecting complete value:", err)
 	}
 }
@@ -308,8 +312,7 @@ func TestToggleItem_WhenSaveReturnsErr_ExpectNoChangetoUi(t *testing.T) {
 	ctx := setup()
 
 	// Given one item added
-	ctx.Entry.SetText("An item")
-	ctx.AddButton.Click()
+	ctx.GivenNItemsAdded(1)
 	item := ctx.ui.Items()[0]
 
 	// And given ItemStore.Save() will return an error
@@ -318,10 +321,87 @@ func TestToggleItem_WhenSaveReturnsErr_ExpectNoChangetoUi(t *testing.T) {
 	// When item toggled
 	// Sending "false" for the state because it's the responsibility of the button's
 	// callback to update the button state
-	ctx.ToggleButton.Click(item.Id, false)
+	ctx.ToggleButton.Click(item.Id(), false)
 
 	// Then expect the Ui shows the item is still incomplete
-	if err := Expect(false, item.Complete); err != nil {
+	if err := Expect(false, item.Complete()); err != nil {
 		t.Fatal("Expecting item is complete:", err)
+	}
+}
+
+// Given the max complete items threshold is 10 items
+// And 11 items added
+// And 10 items are complete
+// When the last item is completed
+// Then expect the first of the completed items is deleted from the UI
+func TestToggleItem_GivenMaxCompletedItems_WhenNewItemAdded_ExpectOneItemDeleted(t *testing.T) {
+	// Given the max complete items threshold is 10 items added (default)
+	ctx := setup()
+
+	// And 11 items added
+	ctx.GivenNItemsAdded(11)
+	items := ctx.ui.Items()
+
+	incompleteItemIndex := 0
+	completedItems := append(items[:incompleteItemIndex], items[incompleteItemIndex:]...)
+
+	// And 10 items are complete
+	for _, item := range completedItems {
+		ctx.ui.SetItemComplete(item.Id(), true)
+	}
+
+	firstCompletedItem := findFirstCompletedItem(items)
+	if firstCompletedItem == nil {
+		t.Fatal("Unexpected err: couldn't find any completed items")
+	}
+
+	// When the last item is completed (passing `false` b/c the item is _currently_ not checked
+	ctx.ToggleButton.Click(items[incompleteItemIndex].Id(), false)
+
+	// Then expect the first of the completed items is deleted from the UI
+	uiItems := ctx.ui.Items()
+	if err := ExpectCount(10, ctx.ui.Len()); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, uiItem := range uiItems {
+		if err := ExpectItemNeq(uiItem, firstCompletedItem); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// Given the max complete items threshold is 10 items
+// And 11 items added
+// And 5 items are complete (fewer than max)
+// When an incomplete item is completed
+// Then expect no items removed from UI
+func TestToggleComplete_GivenFewCompleteItems_ExpectNoItemsRemovedFromUi(t *testing.T) {
+	// Given the max complete items threshold is 10 items
+	ctx := setup()
+
+	// And 11 items added
+	ctx.GivenNItemsAdded(11)
+
+	// And 5 items are complete
+	nItemsCompleted := 5
+	items := ctx.ui.Items()
+	for _, item := range items[:nItemsCompleted] {
+		item.SetComplete(true)
+	}
+
+	// When an incomplete item is completed (false -> _current_ state--not state to be set to)
+	ctx.ToggleButton.Click(items[nItemsCompleted].Id(), false)
+
+	// Then expect no items removed from UI
+	if err := ExpectCount(len(items), ctx.ui.Len()); err != nil {
+		t.Fatal(err)
+	}
+
+	currentUiItems := ctx.ui.Items()
+	for i:=0; i<len(items); i++ {
+		if err := ExpectItemEq(currentUiItems[i], items[i]); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
