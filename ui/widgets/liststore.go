@@ -9,20 +9,21 @@ import (
 )
 
 type row struct {
-	id   string
-	iter *gtk.TreeIter
+	id                string
+	iter              *gtk.TreeIter
 	lastTimeCompleted time.Time
 }
 
 type style int
 
 const (
-	normal       style = 0
-	oblique      style = 1
-	italic       style = 2
-	COL_STYLE          = 2
-	COL_COMPLETE       = 1
-	COL_TEXT           = 0
+	normal        style = 0
+	oblique       style = 1
+	italic        style = 2
+	COL_SENSITIVE       = 3
+	COL_STYLE           = 2
+	COL_COMPLETE        = 1
+	COL_TEXT            = 0
 )
 
 type ListStore struct {
@@ -45,8 +46,8 @@ func (ls *ListStore) AddItem(item *Item) {
 	r := new(row)
 	var iter gtk.TreeIter
 	ls.Append(&iter)
-	cols := []int{COL_COMPLETE, COL_TEXT, COL_STYLE}
-	vals := []interface{}{item.Complete(), item.Text(), determineStyle(item.Complete())}
+	cols := []int{COL_COMPLETE, COL_TEXT, COL_STYLE, COL_SENSITIVE}
+	vals := []interface{}{item.Complete(), item.Text(), determineStyle(item.Complete()), !item.Complete()}
 	if err := ls.Set(&iter, cols, vals); err != nil {
 		log.Fatal(err)
 	}
@@ -91,8 +92,8 @@ func (ls *ListStore) get(r *row) *Item {
 }
 
 func (ls *ListStore) setComplete(iter *gtk.TreeIter, complete bool) error {
-	cols := []int{COL_COMPLETE, COL_STYLE}
-	vals := []interface{}{complete, determineStyle(complete)}
+	cols := []int{COL_COMPLETE, COL_STYLE, COL_SENSITIVE}
+	vals := []interface{}{complete, determineStyle(complete), !complete}
 	return ls.Set(iter, cols, vals)
 }
 
