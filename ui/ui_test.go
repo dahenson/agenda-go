@@ -158,7 +158,7 @@ func TestSetToggleItemCallback_GivenOneItemAdded_ExpectCallbackCalled(t *testing
 	ctx.ui.AddItem(item)
 
 	// When item toggled
-	ctx.toggleButton.Click(item.Id, true)
+	ctx.toggleButton.Click(item.Id(), true)
 
 	// When Expect callback called one time
 	if err := testutils.Expect(1, callCount); err != nil {

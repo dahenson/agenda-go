@@ -9,11 +9,13 @@ type Ui interface {
 	GetEntryText() string
 	ClearEntryText()
 	Items() []*Item
+	Len() int
 	AddItem(item *Item)
 	SetAddCallback(callback AddCallback)
 	SetItemComplete(id string, complete bool) error
 	SetToggleCallback(callback ToggleCallback)
 	NotifyError(v interface{})
+	RemoveItem(id string) error
 	Run()
 }
 
@@ -21,6 +23,8 @@ type ListStore interface {
 	Items() []*Item
 	AddItem(item *Item)
 	SetItemComplete(itemId string, complete bool) error
+	RemoveItem(id string) error
+	Len() int
 }
 
 type Entry interface {

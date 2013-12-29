@@ -13,11 +13,17 @@ const (
 	toggleRendererName = "completeToggleRenderer"
 )
 
+var b *gtk.Builder
+
 func init() {
 	gtk.Init(nil)
+	b, _ = gtk.BuilderNew()
+	if err := b.AddFromString(gladestr); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func loadEntry(b *gtk.Builder) *Entry {
+func loadEntry() *Entry {
 	obj, err := b.GetObject(entryName)
 	if err != nil {
 		log.Fatal(err)
@@ -29,7 +35,7 @@ func loadEntry(b *gtk.Builder) *Entry {
 	return NewEntry(entry)
 }
 
-func loadListStore(b *gtk.Builder) *ListStore {
+func loadListStore() *ListStore {
 	obj, err := b.GetObject(listStoreName)
 	if err != nil {
 		log.Fatal(err)
@@ -42,7 +48,7 @@ func loadListStore(b *gtk.Builder) *ListStore {
 	return NewListStore(ls)
 }
 
-func loadWindow(b *gtk.Builder) *gtk.Window {
+func loadWindow() *gtk.Window {
 	obj, err := b.GetObject(windowName)
 	if err != nil {
 		log.Fatal(err)
@@ -55,7 +61,7 @@ func loadWindow(b *gtk.Builder) *gtk.Window {
 	return win
 }
 
-func loadToggleRenderer(b *gtk.Builder) *gtk.CellRendererToggle {
+func loadToggleRenderer() *gtk.CellRendererToggle {
 	obj, err := b.GetObject(toggleRendererName)
 	if err != nil {
 		log.Fatal(err)
@@ -68,15 +74,11 @@ func loadToggleRenderer(b *gtk.Builder) *gtk.CellRendererToggle {
 }
 
 func Load() ui.Ui {
-	b, _ := gtk.BuilderNew()
-	if err := b.AddFromString(gladestr); err != nil {
-		log.Fatal(err)
-	}
-	ls := loadListStore(b)
-	toggleButton := NewToggleButton(loadToggleRenderer(b), ls)
-	entry := loadEntry(b)
+	ls := loadListStore()
+	toggleButton := NewToggleButton(loadToggleRenderer(), ls)
+	entry := loadEntry()
 	addButton := entry
-	win := loadWindow(b)
+	win := loadWindow()
 	return ui.NewUi(entry, ls, addButton, toggleButton, func() {
 		win.ShowAll()
 		gtk.Main()

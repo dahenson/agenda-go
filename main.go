@@ -17,7 +17,7 @@ func main() {
 
 	ui := widgets.Load()
 	is := itemstore.NewItemStore(path + "default.txt")
-	app := NewApp(is, ui)
+	app := NewApp(is, ui, 5)
 	app.Load()
 	ui.Run()
 }

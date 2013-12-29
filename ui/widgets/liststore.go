@@ -1,27 +1,29 @@
 package widgets
 
 import (
+	"fmt"
 	. "github.com/dahenson/agenda/types"
 	"github.com/weberc2/gotk3/gtk"
 	"log"
+	"time"
 )
 
 type row struct {
 	id   string
 	iter *gtk.TreeIter
+	lastCompletion time.Time
 }
 
 type style int
 
 const (
-	normal style = 0
-	oblique style = 1
-	italic style = 2
-	COL_STYLE    = 2
-	COL_COMPLETE = 1
-	COL_TEXT     = 0
+	normal       style = 0
+	oblique      style = 1
+	italic       style = 2
+	COL_STYLE          = 2
+	COL_COMPLETE       = 1
+	COL_TEXT           = 0
 )
-
 
 type ListStore struct {
 	*gtk.ListStore
@@ -44,12 +46,13 @@ func (ls *ListStore) AddItem(item *Item) {
 	var iter gtk.TreeIter
 	ls.Append(&iter)
 	cols := []int{COL_COMPLETE, COL_TEXT, COL_STYLE}
-	vals := []interface{}{item.Complete, item.Text, determineStyle(item.Complete)}
+	vals := []interface{}{item.Complete(), item.Text(), determineStyle(item.Complete())}
 	if err := ls.Set(&iter, cols, vals); err != nil {
 		log.Fatal(err)
 	}
-	r.id = item.Id
+	r.id = item.Id()
 	r.iter = &iter
+	r.lastCompletion = item.LastCompletion()
 	ls.rows = append(ls.rows, r)
 }
 
@@ -84,11 +87,7 @@ func (ls *ListStore) getText(iter *gtk.TreeIter) string {
 }
 
 func (ls *ListStore) get(r *row) *Item {
-	return &Item{
-		Id:       r.id,
-		Text:     ls.getText(r.iter),
-		Complete: ls.getComplete(r.iter),
-	}
+	return NewItemFromData(r.id, ls.getText(r.iter), ls.getComplete(r.iter), r.lastCompletion)
 }
 
 func (ls *ListStore) setComplete(iter *gtk.TreeIter, complete bool) error {
@@ -105,11 +104,49 @@ func (ls *ListStore) Items() []*Item {
 	return items
 }
 
-func (ls *ListStore) SetItemComplete(id string, complete bool) error {
-	for _, r := range ls.rows {
+func (ls *ListStore) Len() int {
+	return len(ls.rows)
+}
+
+func (ls *ListStore) getRowIndex(id string) (int, error) {
+	for i, r := range ls.rows {
 		if r.id == id {
-			return ls.setComplete(r.iter, complete)
+			return i, nil
 		}
 	}
+	return -1, fmt.Errorf("Couldn't find id: %s", id)
+}
+
+func (ls *ListStore) getRow(id string) (*row, error) {
+	i, err := ls.getRowIndex(id)
+	if err != nil {
+		return nil, err
+	}
+	return ls.rows[i], nil
+}
+
+func (ls *ListStore) SetItemComplete(id string, complete bool) error {
+	r, err := ls.getRow(id)
+	if err != nil {
+		return err
+	}
+	if err := ls.setComplete(r.iter, complete); err != nil {
+		return err
+	}
+	if complete {
+		r.lastCompletion = time.Now()
+	}
+	return nil
+}
+
+func (ls *ListStore) RemoveItem(id string) error {
+	i, err := ls.getRowIndex(id)
+	if err != nil {
+		return err
+	}
+	r := ls.rows[i]
+	ls.Remove(r.iter)
+	// Remove the row from rows
+	ls.rows = append(ls.rows[:i], ls.rows[i+1:]...)
 	return nil
 }
