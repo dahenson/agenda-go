@@ -11,7 +11,7 @@ import (
 type row struct {
 	id   string
 	iter *gtk.TreeIter
-	lastCompletion time.Time
+	lastTimeCompleted time.Time
 }
 
 type style int
@@ -52,7 +52,7 @@ func (ls *ListStore) AddItem(item *Item) {
 	}
 	r.id = item.Id()
 	r.iter = &iter
-	r.lastCompletion = item.LastCompletion()
+	r.lastTimeCompleted = item.LastTimeCompleted()
 	ls.rows = append(ls.rows, r)
 }
 
@@ -87,7 +87,7 @@ func (ls *ListStore) getText(iter *gtk.TreeIter) string {
 }
 
 func (ls *ListStore) get(r *row) *Item {
-	return NewItemFromData(r.id, ls.getText(r.iter), ls.getComplete(r.iter), r.lastCompletion)
+	return NewItemFromData(r.id, ls.getText(r.iter), ls.getComplete(r.iter), r.lastTimeCompleted)
 }
 
 func (ls *ListStore) setComplete(iter *gtk.TreeIter, complete bool) error {
@@ -134,7 +134,7 @@ func (ls *ListStore) SetItemComplete(id string, complete bool) error {
 		return err
 	}
 	if complete {
-		r.lastCompletion = time.Now()
+		r.lastTimeCompleted = time.Now()
 	}
 	return nil
 }

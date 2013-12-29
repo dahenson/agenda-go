@@ -10,7 +10,7 @@ import (
 // a workaround to make marshalable the unexported members of Item
 type itemData struct {
 	Text     string
-	LastCompletion time.Time
+	LastTimeCompleted time.Time
 	Complete bool
 	Id       string
 }
@@ -23,19 +23,19 @@ func NewItem(text string) *Item {
 	return &Item{itemData{Text: text, Complete: false, Id: puuid.Generate()}}
 }
 
-func NewItemFromData(id, text string, complete bool, lastCompletion time.Time) *Item {
+func NewItemFromData(id, text string, complete bool, lastTimeCompleted time.Time) *Item {
 	return &Item{itemData{
 		Id: id,
 		Text: text,
 		Complete: complete,
-		LastCompletion: lastCompletion,
+		LastTimeCompleted: lastTimeCompleted,
 	}}
 }
 
 // Resets the last completion time to `time.Now()` if `complete` is `true`
 func (i *Item) SetComplete(complete bool) {
 	if complete {
-		i.itemData.LastCompletion = time.Now()
+		i.itemData.LastTimeCompleted = time.Now()
 	}
 	i.itemData.Complete = complete
 }
@@ -49,11 +49,11 @@ func (i *Item) Id() string {
 }
 
 func (i *Item) CompletedBefore(other *Item) bool {
-	return i.itemData.LastCompletion.Before(other.itemData.LastCompletion)
+	return i.itemData.LastTimeCompleted.Before(other.itemData.LastTimeCompleted)
 }
 
-func (i *Item) LastCompletion() time.Time {
-	return i.itemData.LastCompletion
+func (i *Item) LastTimeCompleted() time.Time {
+	return i.itemData.LastTimeCompleted
 }
 
 func (i *Item) Text() string {

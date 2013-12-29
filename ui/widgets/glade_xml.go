@@ -71,6 +71,7 @@ var gladestr = `<?xml version="1.0" encoding="UTF-8"?>
                         <child>
                           <object class="GtkCellRendererText" id="cellrenderertext1"/>
                           <attributes>
+                            <attribute name="sensitive">1</attribute>
                             <attribute name="strikethrough">1</attribute>
                             <attribute name="style">2</attribute>
                             <attribute name="text">0</attribute>
