@@ -11,6 +11,8 @@ var gladestr = `<?xml version="1.0" encoding="UTF-8"?>
       <column type="gboolean"/>
       <!-- column-name Style -->
       <column type="gint"/>
+      <!-- column-name Sensitive -->
+      <column type="gboolean"/>
     </columns>
   </object>
   <object class="GtkWindow" id="mainWindow">
@@ -71,7 +73,7 @@ var gladestr = `<?xml version="1.0" encoding="UTF-8"?>
                         <child>
                           <object class="GtkCellRendererText" id="cellrenderertext1"/>
                           <attributes>
-                            <attribute name="sensitive">1</attribute>
+                            <attribute name="sensitive">3</attribute>
                             <attribute name="strikethrough">1</attribute>
                             <attribute name="style">2</attribute>
                             <attribute name="text">0</attribute>
