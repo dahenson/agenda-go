@@ -17,7 +17,7 @@ func main() {
 	}
 
 	ui := widgets.Load()
-	is := itemstore.NewItemStore(filepath.Join(path, "default.txt"))
+	is := itemstore.NewItemStore(filepath.Join(path, "default.json"))
 	app := NewApp(is, ui, 5)
 	app.Load()
 	ui.Run()
