@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -13,17 +14,18 @@ type FileSystem interface {
 	IsNotExist(err error) bool
 }
 
-type osFS struct {}
+type osFS struct{}
 
 // GetPath() uses the XDG_DATA_HOME environmental variable to create agenda's
 // working directory. If the variable is not set, it uses the default of
 // "$HOME/.local/share".
 func GetPath() string {
+	home := os.Getenv("HOME")
 	xdg := os.Getenv("XDG_DATA_HOME")
 	if xdg == "" {
-		xdg = "$HOME/.local/share"
+		xdg = filepath.Join(home, ".local", "share")
 	}
-	xdg = os.ExpandEnv(xdg) + "/agenda/"
+	xdg = filepath.Join(xdg, "agenda")
 	return xdg
 }
 
@@ -54,9 +56,11 @@ const (
 	NOT_EXIST_PREFIX = "open "
 	NOT_EXIST_SUFFIX = ": no such file or directory"
 )
+
 type FakeFS struct {
 	files map[string][]byte
 }
+
 func NewFakeFS() *FakeFS {
 	return &FakeFS{files: make(map[string][]byte)}
 }
