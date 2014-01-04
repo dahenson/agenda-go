@@ -90,4 +90,3 @@ func TestRemove_GivenTwoItems_WhenSecondRemoved_ExpectItemsReturns1Item(t *testi
 		}
 	}
 }
-
