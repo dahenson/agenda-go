@@ -48,7 +48,6 @@ var gladestr = `<?xml version="1.0" encoding="UTF-8"?>
                     <property name="model">itemsListStore</property>
                     <property name="headers_visible">False</property>
                     <property name="headers_clickable">False</property>
-                    <property name="reorderable">True</property>
                     <property name="search_column">1</property>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection" id="treeview-selection"/>
