@@ -13,6 +13,8 @@ var gladestr = `<?xml version="1.0" encoding="UTF-8"?>
       <column type="gint"/>
       <!-- column-name Sensitive -->
       <column type="gboolean"/>
+      <!-- column-name Id -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkWindow" id="mainWindow">

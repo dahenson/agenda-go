@@ -20,6 +20,7 @@ const (
 	normal        style = 0
 	oblique       style = 1
 	italic        style = 2
+	COL_ID              = 4
 	COL_SENSITIVE       = 3
 	COL_STYLE           = 2
 	COL_COMPLETE        = 1
@@ -46,8 +47,8 @@ func (ls *ListStore) AddItem(item *Item) {
 	r := new(row)
 	var iter gtk.TreeIter
 	ls.Append(&iter)
-	cols := []int{COL_COMPLETE, COL_TEXT, COL_STYLE, COL_SENSITIVE}
-	vals := []interface{}{item.Complete(), item.Text(), determineStyle(item.Complete()), !item.Complete()}
+	cols := []int{COL_COMPLETE, COL_TEXT, COL_STYLE, COL_SENSITIVE, COL_ID}
+	vals := []interface{}{item.Complete(), item.Text(), determineStyle(item.Complete()), !item.Complete(), item.Id()}
 	if err := ls.Set(&iter, cols, vals); err != nil {
 		log.Fatal(err)
 	}
@@ -87,8 +88,17 @@ func (ls *ListStore) getText(iter *gtk.TreeIter) string {
 	return text
 }
 
+func (ls *ListStore) getId(iter *gtk.TreeIter) string {
+	goval := ls.getVal(iter, COL_ID)
+	id, ok := goval.(string)
+	if !ok {
+		log.Fatal("Failed to type-cast interface{} to string")
+	}
+	return id
+}
+
 func (ls *ListStore) get(r *row) *Item {
-	return NewItemFromData(r.id, ls.getText(r.iter), ls.getComplete(r.iter), r.lastTimeCompleted)
+	return NewItemFromData(ls.getId(r.iter), ls.getText(r.iter), ls.getComplete(r.iter), r.lastTimeCompleted)
 }
 
 func (ls *ListStore) setComplete(iter *gtk.TreeIter, complete bool) error {
@@ -110,6 +120,11 @@ func (ls *ListStore) Len() int {
 }
 
 func (ls *ListStore) getRowIndex(id string) (int, error) {
+	iter, err := ls.ListStore.GetIterFirst()
+	if err != nil {
+		return -1, err
+	}
+
 	for i, r := range ls.rows {
 		if r.id == id {
 			return i, nil

@@ -405,3 +405,50 @@ func TestToggleComplete_GivenFewCompleteItems_ExpectNoItemsRemovedFromUi(t *test
 		}
 	}
 }
+
+func expectItemsCorrectlyOrdered(items []*Item) error {
+	foundCompletedItem := false
+	var prev *Item
+	for _, item := range items {
+		if foundCompletedItem {
+			// once we've found a completed item, make sure there are no subsequent
+			// incomplete items
+			if !item.Complete() {
+				msg := "Found one or more completed items between incomplete items"
+				return fmt.Errorf(msg)
+			}
+			// once we've found a completed item, make sure all subsequent items
+			// are ordered descending by completion date
+			if item.CompletedBefore(prev) {
+				msg := "Completed items not ordered desc by last completion time"
+				return fmt.Errorf(msg)
+			}
+		}
+		if item.Complete() {
+			foundCompletedItem = true
+			prev = item
+		}
+	}
+	return nil
+}
+
+// Given 2 incomplete items
+// When first item marked complete
+// Then expect items correctly ordered
+func TestToggleComplete_GivenTwoItems_ExpectCompletedItemAtBottom(t *testing.T) {
+	ctx := setup()
+
+	// Given 2 incomplete items
+	ctx.GivenNItemsAdded(2)
+
+	items := ctx.ui.Items()
+	first := items[0]
+
+	// When first item marked complete
+	ctx.App.OnToggleItem(first.Id(), false)
+
+	// Then expect items correctly ordered
+	if err := expectItemsCorrectlyOrdered(ctx.ui.Items()); err != nil {
+		t.Fatal(err)
+	}
+}
