@@ -1,7 +1,7 @@
 package widgets
 
 import (
-	"github.com/weberc2/gotk3/gtk"
+	"github.com/conformal/gotk3/gtk"
 	. "github.com/dahenson/agenda/ui/uicallbacks"
 	"log"
 )
@@ -22,12 +22,10 @@ func (btn *ToggleButton) SetCallback(callback ToggleCallback) {
 			log.Fatalf("Failed to get iter from path: '%s': %v", path, err)
 		}
 
-		for _, r := range btn.ListStore.rows {
-			if *r.iter == *iter {
-				callback(r.id, btn.ListStore.getComplete(iter))
-				return
-			}
-		}
-		log.Fatal("Couldn't find an item matching path:", path)
+		id := btn.ListStore.getId(iter)
+		complete := btn.ListStore.getComplete(iter)
+		println(complete)
+		callback(id, complete)
+		return
 	})
 }
