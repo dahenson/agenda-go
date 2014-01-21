@@ -38,12 +38,31 @@ func determineStyle(complete bool) style {
 }
 
 func (ls *ListStore) AddItem(item *Item) {
-	var iter gtk.TreeIter
-	ls.Append(&iter)
+	var newIter gtk.TreeIter
+
+	found := false
+	if cursor, listIsntEmpty := ls.GetIterFirst(); listIsntEmpty {
+		for {
+			if ls.getComplete(cursor) {
+				ls.InsertBefore(&newIter, cursor)
+				found = true
+				break
+			}
+
+			if !ls.IterNext(cursor) {
+				break
+			}
+		}
+	}
+
+	if !found {
+		ls.Append(&newIter)
+	}
+
 	lastCompleted := item.LastTimeCompleted().Format(time.ANSIC)
 	cols := []int{COL_COMPLETE, COL_TEXT, COL_STYLE, COL_SENSITIVE, COL_ID, COL_LAST_COMPLETED}
 	vals := []interface{}{item.Complete(), item.Text(), determineStyle(item.Complete()), !item.Complete(), item.Id(), lastCompleted}
-	if err := ls.Set(&iter, cols, vals); err != nil {
+	if err := ls.Set(&newIter, cols, vals); err != nil {
 		log.Fatal("Failed to add item:", err)
 	}
 }
@@ -115,53 +134,97 @@ func (ls *ListStore) get(iter *gtk.TreeIter) *Item {
 	return NewItemFromData(id, text, complete, t)
 }
 
-func (ls *ListStore) foreach(f func(*gtk.TreeIter)) {
+func (ls *ListStore) foreach(f func(*gtk.TreeIter), _break *bool) {
 	// if the list is empty, do nothing
 	if iter, listIsntEmpty := ls.ListStore.GetIterFirst(); listIsntEmpty {
-		for f(iter); ls.ListStore.IterNext(iter); f(iter) {}
+		for f(iter); ls.ListStore.IterNext(iter) && !(*_break); f(iter) {}
 	}
 }
 
 func (ls *ListStore) Items() []*Item {
 	items := []*Item{}
+	_break := false
 	ls.foreach(func(iter *gtk.TreeIter) {
 		items = append(items, ls.get(iter))
-	})
+	}, &_break)
 	return items
 }
 
 func (ls *ListStore) Len() int {
 	count := 0
+	_break := false
 	ls.foreach(func(_ *gtk.TreeIter) {
 		count++
-	})
+	}, &_break)
 	return count
 }
+
+var IdNotFoundErr = fmt.Errorf("Couldn't find specified id")
 
 func (ls *ListStore) findId(id string) (*gtk.TreeIter, error) {
 	var i gtk.TreeIter
 	found := false
+	_break := false
 	ls.foreach(func(iter *gtk.TreeIter) {
 		if ls.getId(iter) == id {
 			i = *iter
 			found = true
 			return
 		}
-	})
+	}, &_break)
 	if !found{
-		return nil, fmt.Errorf("Couldn't find id: %s", id)
+		return nil, IdNotFoundErr
 	}
 	return &i, nil
 }
 
 func (ls *ListStore) SetItemComplete(id string, complete bool) error {
-	iter, err := ls.findId(id)
+	var firstCompletedItem *gtk.TreeIter = nil
+	var specifiedIter *gtk.TreeIter = nil
+	var lastIter *gtk.TreeIter = nil
+
+	_break := false
+	var err error = nil
+	ls.foreach(func(iterPtr *gtk.TreeIter) {
+		iter := *iterPtr
+		if firstCompletedItem == nil && ls.getComplete(iterPtr) {
+			firstCompletedItem = &iter
+			// if both are found, break
+			if specifiedIter != nil {
+				_break = true
+			}
+		}
+
+		if ls.getId(iterPtr) == id {
+			specifiedIter = &iter
+			if err = ls.setComplete(iterPtr, complete); err != nil {
+				_break = true
+			}
+			// if both are found, break
+			if firstCompletedItem != nil {
+				_break = true
+			}
+		}
+
+		lastIter = &iter
+	}, &_break)
+
 	if err != nil {
 		return err
 	}
-	if err := ls.setComplete(iter, complete); err != nil {
-		log.Println("Failed to set COL_COMPLETE:", err)
+
+	if specifiedIter == nil {
+		return IdNotFoundErr
 	}
+
+	// if the newly-completed item is the first completed item
+	if firstCompletedItem == nil {
+		ls.MoveAfter(specifiedIter, lastIter)
+		return nil
+	}
+
+	// move newly-completed item before the first completed item
+	ls.MoveBefore(specifiedIter, firstCompletedItem)
 	return nil
 }
 

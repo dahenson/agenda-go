@@ -51,10 +51,12 @@ func (a *App) removeFirstCompletedItem() error {
 	if firstCompletedItem == nil {
 		return nil
 	}
+
 	// remove it from model
 	if err := a.ui.RemoveItem(firstCompletedItem.Id()); err != nil {
 		return err
 	}
+
 	// save the itemstore
 	return a.itemstore.Save(a.ui.Items())
 }

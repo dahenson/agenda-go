@@ -24,7 +24,6 @@ func (btn *ToggleButton) SetCallback(callback ToggleCallback) {
 
 		id := btn.ListStore.getId(iter)
 		complete := btn.ListStore.getComplete(iter)
-		println(complete)
 		callback(id, complete)
 		return
 	})
