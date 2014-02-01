@@ -44,15 +44,14 @@ func determineStyle(complete bool) style {
 
 func (ls *ListStore) AddItem(item *Item) {
 	r := new(row)
-	var iter gtk.TreeIter
-	ls.Append(&iter)
+	iter := ls.Append()
 	cols := []int{COL_COMPLETE, COL_TEXT, COL_STYLE, COL_SENSITIVE}
 	vals := []interface{}{item.Complete(), item.Text(), determineStyle(item.Complete()), !item.Complete()}
-	if err := ls.Set(&iter, cols, vals); err != nil {
+	if err := ls.Set(iter, cols, vals); err != nil {
 		log.Fatal(err)
 	}
 	r.id = item.Id()
-	r.iter = &iter
+	r.iter = iter
 	r.lastTimeCompleted = item.LastTimeCompleted()
 	ls.rows = append(ls.rows, r)
 }
