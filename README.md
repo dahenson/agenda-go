@@ -1,7 +1,7 @@
 agenda
 ======
 
-[![Build Status](https://drone.io/github.com/dahenson/agenda/status.png)](https://drone.io/github.com/dahenson/agenda/latest)
+## NO LONGER MAINTAINED!!!
 
 A simple todo (task) list built in Go and GTK (by way of the Gotk3 bindings: http://github.com/conformal/gotk3)
 
